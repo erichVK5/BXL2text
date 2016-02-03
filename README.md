@@ -1,7 +1,7 @@
 # BXL2text
 A utility to convert huffman encoded BXL schematic and footprint files to plain text.
 
-The Huffman decoding portio of this utility is based on vala code originally by Geert Jordaens.
+The Huffman decoding portion of this utility is based on vala code originally by Geert Jordaens.
 
 A first pass of conversion of BXL encoded SMD footprints into a single file of gEDA PCB footprints has now been achieved, utilising the BXL encoded padstack definitions.
 
@@ -26,7 +26,7 @@ Usage:
 
 	4) javac *.java
 
-	5) java BXLDecoder YOURBXLFILEHERE.bxl > YOURBXLFILE.txt
+	5) java BXLDecoder YOURBXLFILEHERE.bxl -t > YOURBXLFILE.txt
 
 Options:
 
