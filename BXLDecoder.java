@@ -31,13 +31,82 @@ public class BXLDecoder {
 
   public static void main (String [] args) {
 
-    String filename = args [0];
+    boolean textOutput = false;
+    String filename = "";
+
+    if (args.length == 0) {
+      printHelp();
+      System.exit(0);
+    } else {
+      filename = args [0];
+    }
+
+    if (args.length == 2) {
+      if (args[1].equals("-t")) {
+        textOutput = true;
+      }
+    }
 
     SourceBuffer buffer = new SourceBuffer(filename); 
 
-    System.out.println(buffer.decode());
+    if (textOutput) {
+      System.out.println(buffer.decode());
+      System.exit(0);
+    }
 
+    Scanner textBXL = new Scanner(buffer.decode());
+
+
+    String currentLine = "";
+    String newElement = "";
+    PadStackList padStacks = new PadStackList();
+
+    long xOffset = 0;
+    long yOffset = 0;
+
+    
+    while (textBXL.hasNext()) {
+      currentLine = textBXL.nextLine().trim();
+      if (currentLine.startsWith("PadStack")) {
+          newElement = currentLine;
+          while (textBXL.hasNext() &&
+                 !currentLine.startsWith("EndPadStack")) {
+            currentLine = textBXL.nextLine().trim();
+            newElement = newElement + "\n" + currentLine;
+          }
+          padStacks.addPadStack(newElement);
+          newElement = ""; // reset the variable
+      } else if (currentLine.startsWith("Pattern")) {
+        String [] tokens = currentLine.split(" ");
+        String FPName = tokens[1].replaceAll("[\"]","");
+        while (textBXL.hasNext() &&
+               !currentLine.startsWith("EndPattern")) {
+          currentLine = textBXL.nextLine().trim();
+          if (currentLine.startsWith("Pad")) {
+            newElement = newElement
+                + padStacks.GEDAPad(currentLine).generateGEDAelement(xOffset,yOffset,1.0f);
+          }
+        }
+        System.out.println("Element[\"\" \""
+                           + FPName
+                           + "\" \"\" \"\" 0 0 0 25000 0 100 \"\"]\n(\n"
+                           + newElement
+                           + ")");  
+        newElement = ""; // reset the variable
+      }           
+    }
+    
   }    
+
+  public static void printHelp() {
+    System.out.println("usage:\n\n\tjava BXLDecoder BXLFILE.bxl\n\n"
+                       + "options:\n\n"
+                       + "\t\t-t\tonly output converted text"
+                       + " without further conversion\n\n"
+                       + "example:\n\n"
+                       + "\tjava BXLDecoder BXLFILE.bxl"
+                       + " -t > BXLFILE.txt\n");
+  }
   
 }
 
