@@ -85,6 +85,11 @@ public class BXLDecoder {
           if (currentLine.startsWith("Pad")) {
             newElement = newElement
                 + padStacks.GEDAPad(currentLine).generateGEDAelement(xOffset,yOffset,1.0f);
+          } else if (currentLine.startsWith("Line (Layer TOP_SILKSCREEN)")) {
+            DrawnElement silkLine = new DrawnElement();
+            silkLine.populateBXLElement(currentLine);
+            newElement = newElement
+                + silkLine.generateGEDAelement(xOffset,yOffset,1.0f);
           }
         }
         System.out.println("Element[\"\" \""

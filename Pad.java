@@ -397,6 +397,11 @@ public class Pad extends FootprintElementArchetype
     //              System.out.println("finished populating pad object");
   }
 
+  // here, we populate the pad  object with data
+  // extracted from a BXL file
+  // noting that y-coords are inverted relative
+  // to gEDA and kicad
+  // may need to think about effect on rotation
   public void populateBXLElement(long w,
                                  long h,
                                  long x,
@@ -411,7 +416,7 @@ public class Pad extends FootprintElementArchetype
     kicadShapeXsizeNm = w;
     kicadShapeYsizeNm = h;
     kicadPadPositionXNm = x;
-    kicadPadPositionYNm = y;
+    kicadPadPositionYNm = -y;
     kicadDrillShape = shape;
     kicadShapeOrientation = rot;
     kicadDrillOneSizeNm = holeDiam;
