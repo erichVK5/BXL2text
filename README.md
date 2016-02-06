@@ -3,9 +3,9 @@ A utility to convert huffman encoded BXL schematic and footprint files to plain 
 
 The Huffman decoding portion of this utility is based on vala code originally developed by Geert Jordaens.
 
-A first pass of conversion of BXL encoded SMD footprints into a single file of gEDA PCB footprints has now been achieved, utilising the BXL encoded padstack definitions.
+Conversion of BXL encoded SMD and through hole footprints into a single file of gEDA PCB footprints has now been achieved, utilising the BXL encoded padstack definitions.
 
-Top layer silkscreen lines are now converted as well.
+Top layer silkscreen lines and arcs are converted as well.
 
 The issue of BXL files using an inverted y-axis relative to gEDA / kicad has been addressed.
 
@@ -19,6 +19,12 @@ To do:
 - combining this code with KicadModuleToGEDA and KicadSymbolToGEDA
 
 Licence: GPL2
+
+For example vendor BXL files, see:
+
+- http://webench.ti.com/cad/cad.cgi
+- http://www.silabs.com/support/Pages/CAD-CAE-Schematic-Footprints-and-Symbols.aspx
+- http://www.microchip.com/pagehandler/en-us/devtools/cad-cae-symbols.html
 
 Usage:
 
