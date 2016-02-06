@@ -76,15 +76,17 @@ public class BXLDecoder {
           }
           padStacks.addPadStack(newElement);
           newElement = ""; // reset the variable
-      } else if (currentLine.startsWith("Pattern")) {
+      } else if (currentLine.startsWith("Pattern ")) {
         String [] tokens = currentLine.split(" ");
         String FPName = tokens[1].replaceAll("[\"]","");
         while (textBXL.hasNext() &&
                !currentLine.startsWith("EndPattern")) {
           currentLine = textBXL.nextLine().trim();
           if (currentLine.startsWith("Pad")) {
+            //System.out.println("#Making new pad: " + currentLine);
+            Pad newPad = padStacks.GEDAPad(currentLine);
             newElement = newElement
-                + padStacks.GEDAPad(currentLine).generateGEDAelement(xOffset,yOffset,1.0f);
+                + newPad.generateGEDAelement(xOffset,yOffset,1.0f);
           } else if (currentLine.startsWith("Line (Layer TOP_SILKSCREEN)")) {
             DrawnElement silkLine = new DrawnElement();
             silkLine.populateBXLElement(currentLine);

@@ -423,6 +423,10 @@ public class Pad extends FootprintElementArchetype
     kicadPadAttributeType = attr;
     kicadShapePadName = pinNum;
     kicadShapeNetName = pinName;
+
+    // for now, we do not worry ourselves with slots, so...
+    kicadDrillShapeTwo = '0';
+
   }
 
 

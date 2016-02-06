@@ -59,6 +59,7 @@ public class PadStack {
         holeDiam = args2[3];
         surface = args2[5];
         plated = args2[7];
+        //System.out.println("Plated status: >" + plated + "<"); 
       } else if (args2[0].equals("Shapes")) {
         shapeCount = Integer.parseInt(args2[1]);
         width = new float [shapeCount];
@@ -77,6 +78,8 @@ public class PadStack {
   }
 
   public boolean is(String ident) {
+    //System.out.println("I am an >" + identifier + "<\nbut a >" +
+    //                   ident + "< is being looked for");
     return identifier.equals(ident);
   }
 
@@ -150,9 +153,10 @@ public class PadStack {
     // shape
     //    System.out.println("Shape type from BXL: " + shapeType[0]);
     if (shapeType[0].equals("Rectangle") ||
-        shapeType[0].equals("SQUARE")) {
+        shapeType[0].equals("SQUARE") ||
+        shapeType[0].equals("Square")) {
       kicadShape = 'R';
-    } else if (shapeType[0].equals("Circle")) {
+    } else if (shapeType[0].equals("Round")) {
       kicadShape = 'C';
     }
 
@@ -163,10 +167,15 @@ public class PadStack {
     kicadHoleDiamNm = (long)(Float.parseFloat(holeDiam)*25400);
 
     // pad attribute
-    if (kicadHoleDiamNm != 0) {
+    if (kicadHoleDiamNm != 0 && plated.equals("True")) {
       kicadPadAttributeType = "STD";
+      //System.out.println("This is a STD thru hole");
+    } else if (kicadHoleDiamNm != 0 && plated.equals("False")) {
+      kicadPadAttributeType = "HOLE";
+      //System.out.println("This is a non plated HOLE");
     } else {
       kicadPadAttributeType = "SMD";
+      //System.out.println("This is SMD");
     } // hmm, maybe consider "HOLE" for diam !=0 && Plated == false
 
     // with a bunch of kicad equivalent values, we can call
