@@ -108,8 +108,36 @@ public class BXLDecoder {
                            + ")");  
         newElement = ""; // reset the variable
       } else if (currentLine.startsWith("Symbol ")) {
-
-
+        String [] tokens = currentLine.split(" ");
+        String SymbolName = tokens[1].replaceAll("[\"]","");
+        PinList pins = new PinList(0); // slots = 0
+        while (textBXL.hasNext() &&
+               !currentLine.startsWith("EndSymbol")) {
+          currentLine = textBXL.nextLine().trim();
+          if (currentLine.startsWith("Pin")) {
+            //System.out.println("#Making new pin: " + currentLine);
+            SymbolPin latestPin = new SymbolPin();
+            currentLine = currentLine + " " +
+                textBXL.nextLine().trim() + " " +
+                textBXL.nextLine().trim(); // we combine the 3 lines
+            latestPin.populateBXLElement(currentLine);
+            pins.addPin(latestPin);
+          } else if (currentLine.startsWith("Line")) {
+            SymbolPolyline symbolLine = new SymbolPolyline();
+            symbolLine.populateBXLElement(currentLine);
+            newElement = newElement
+                + "\n" + symbolLine.toString(0,0);
+          } else if (currentLine.startsWith("Arc (Layer TOP_SILKSCREEN)")) {
+            Arc silkArc = new Arc();
+            silkArc.populateBXLElement(currentLine);
+            newElement = newElement
+                + silkArc.generateGEDAelement(xOffset,yOffset,1.0f);
+          }
+        }
+        System.out.println("v 20110115 1"
+                           + newElement
+                           + pins.toString(0,0));
+        newElement = "";
       }
     }
     
