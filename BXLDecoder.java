@@ -92,7 +92,14 @@ public class BXLDecoder {
             silkLine.populateBXLElement(currentLine);
             newElement = newElement
                 + silkLine.generateGEDAelement(xOffset,yOffset,1.0f);
+          } else if (currentLine.startsWith("Arc (Layer TOP_SILKSCREEN)")) {
+            Arc silkArc = new Arc();
+            silkArc.populateBXLElement(currentLine);
+            newElement = newElement
+                + silkArc.generateGEDAelement(xOffset,yOffset,1.0f);
           }
+
+
         }
         System.out.println("Element[\"\" \""
                            + FPName
@@ -100,7 +107,10 @@ public class BXLDecoder {
                            + newElement
                            + ")");  
         newElement = ""; // reset the variable
-      }           
+      } else if (currentLine.startsWith("Symbol ")) {
+
+
+      }
     }
     
   }    
