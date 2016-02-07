@@ -59,6 +59,8 @@ public class BXLDecoder {
 
     String currentLine = "";
     String newElement = "";
+    String newSymbol = "";
+    String symAttributes = "";
     PadStackList padStacks = new PadStackList();
 
     long xOffset = 0;
@@ -105,7 +107,7 @@ public class BXLDecoder {
                            + FPName
                            + "\" \"\" \"\" 0 0 0 25000 0 100 \"\"]\n(\n"
                            + newElement
-                           + ")");  
+                           + ")");
         newElement = ""; // reset the variable
       } else if (currentLine.startsWith("Symbol ")) {
         String [] tokens = currentLine.split(" ");
@@ -132,13 +134,71 @@ public class BXLDecoder {
             silkArc.populateBXLElement(currentLine);
             newElement = newElement
                 + silkArc.generateGEDAelement(xOffset,yOffset,1.0f);
+          } else if (currentLine.startsWith("Attribute")) {
+            SymbolText attrText = new SymbolText();
+            attrText.populateBXLElement(currentLine);
+            if (symAttributes.length() == 0) {
+              symAttributes = symAttributes
+                  + SymbolText.BXLAttributeString(0,0, currentLine);
+                  // + attrText.toString(0,0, false);
+            } else {
+              symAttributes = symAttributes
+                  + SymbolText.BXLAttributeString(0,0, currentLine);
+                  // + attrText.toString(0,0, false);
+            }
+
           }
         }
-        System.out.println("v 20110115 1"
-                           + newElement
-                           + pins.toString(0,0));
+        newSymbol = "v 20110115 1"
+            + newElement
+            + pins.toString(0,0);
         newElement = "";
+      } else if (currentLine.startsWith("Component ")) {
+        String [] tokens = currentLine.split(" ");
+        String SymbolName = tokens[1].replaceAll("[\"]","");
+        PinList pins = new PinList(0); // slots = 0
+        while (textBXL.hasNext() &&
+               !currentLine.startsWith("EndComponent")) {
+          currentLine = textBXL.nextLine().trim();
+          if (currentLine.startsWith("Attribute")) {
+            SymbolText attrText = new SymbolText();
+            attrText.populateBXLElement(currentLine);
+            if (symAttributes.length() == 0 || 
+                symAttributes.charAt(symAttributes.length()-1)
+                == '\n') {
+              symAttributes = symAttributes
+                  + SymbolText.BXLAttributeString(0,0, currentLine);
+                  //+ attrText.toString(0,0, false);
+            } else {
+              symAttributes = symAttributes
+                  + SymbolText.BXLAttributeString(0,0, currentLine);
+                  //+ attrText.toString(0,0, false);
+            }
+          } else if (currentLine.startsWith("RefDesPrefix")) {
+            currentLine = currentLine.replaceAll(" ", "");
+            currentLine = currentLine.split("\"")[1];
+            // System.out.println("Extracted refdesprefix: "
+            // + currentLine);
+            String refDesAttr = "refdes=" + currentLine + "?";
+            if (symAttributes.length() == 0 || 
+                symAttributes.charAt(symAttributes.length()-1)
+                == '\n') {
+              symAttributes = symAttributes
+                  + SymbolText.BXLAttributeString(0,0, refDesAttr);
+                  //+ SymbolText.attributeString(0,0, refDesAttr);
+            } else {
+              symAttributes = symAttributes
+                  + SymbolText.BXLAttributeString(0,0, refDesAttr);
+                  //+ "\n"
+                  //+ SymbolText.attributeString(0,0, refDesAttr);
+            }
+          }
+        }
+        System.out.println(newSymbol + symAttributes);
+        symAttributes = "";
       }
+
+
     }
     
   }    

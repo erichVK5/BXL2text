@@ -79,6 +79,10 @@ public class SymbolText extends SymbolElement
   }
 
   public void populateBXLElement(String BXLLine) {
+    // this is a bit convoluted because the attribute
+    // fields can contain spaces, and are delimited
+    // with double quotes, i.e. '"', so we can't
+    // just split the line into tokens around " "
     int indexOne = BXLLine.indexOf("(Attr \"");
     String residue = BXLLine.substring(indexOne);
     int indexTwo = residue.indexOf("\") ");
@@ -86,7 +90,7 @@ public class SymbolText extends SymbolElement
     indexOne = residue.indexOf("\" \"");
     String residueOne = residue.substring(0,indexOne);
     String residueTwo = residue.substring(indexOne + 3);
-    textField = residueOne + "=" + residueTwo + "\n";
+    textField = residueOne + "=" + residueTwo;
     // System.out.println("Final extracted field: " + textField);
     BXLLine = BXLLine.replaceAll("[\"(),]","");
     String [] tokens = BXLLine.split(" ");
@@ -100,7 +104,6 @@ public class SymbolText extends SymbolElement
     }
     textSize = defaultTextSize;
   }
-
   
   public void constructor(String arg)
   {
@@ -192,6 +195,22 @@ public class SymbolText extends SymbolElement
             + textAlignment + " " //default value
             + numLines + "\n"
             + text);
+  }
+
+  public static String BXLAttributeString(long xOffset, long yOffset, String attribute) {
+    String extract = "";
+    if (!attribute.startsWith("refdes=")) {
+      int indexOne = attribute.indexOf("(Attr ");
+      int indexTwo = attribute.indexOf(")", indexOne);
+      attribute = attribute.substring(indexOne + 6, indexTwo);
+      indexOne = attribute.indexOf("\" \"");
+      extract = attribute.substring(0,indexOne);
+      extract = extract + "=" + attribute.substring(indexOne + 3); 
+      extract = extract.replaceAll("\"", "");
+    } else {
+      extract = attribute;
+    }
+    return attributeString(xOffset, yOffset, extract);
   }
 
   public static String attributeString(long xOffset, long yOffset, String attribute) {
