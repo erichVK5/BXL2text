@@ -1,7 +1,7 @@
 # BXL2text
 A utility to convert huffman encoded BXL schematic and footprint files to plain text, and undertake further conversion to FOSS EDA compatible formats.
 
-The Huffman decoding portion of this utility is based on vala code originally developed by Geert Jordaens.
+The Huffman decoding portion of this utility is based on vala code originally developed by Geert Jordaens, and uses adaptive Huffman decoding.
 
 Conversion of BXL encoded SMD and through hole footprints into a single file of gEDA PCB footprints has now been achieved, utilising the BXL encoded padstack definitions.
 
@@ -9,7 +9,7 @@ Top layer silkscreen lines and arcs are converted as well.
 
 The issue of BXL files using an inverted y-axis relative to gEDA / kicad has been addressed.
 
-Working gschem symbols are now exported, appended to the file of extracted footprints.
+Working gschem symbols are now exported, appended to the file of extracted footprints. Attribute fields defined in the BXL file are also appended to the symbol.
 
 The utility can export either Huffman decoded data as plain text, or perform further conversion.
 
