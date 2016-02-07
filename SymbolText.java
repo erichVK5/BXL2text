@@ -77,6 +77,30 @@ public class SymbolText extends SymbolElement
     maxTextY = newY + 100;
     invisibleAttributeCount = 0;
   }
+
+  public void populateBXLElement(String BXLLine) {
+    int indexOne = BXLLine.indexOf("(Attr \"");
+    String residue = BXLLine.substring(indexOne);
+    int indexTwo = residue.indexOf("\") ");
+    residue = residue.substring(7,indexTwo);
+    indexOne = residue.indexOf("\" \"");
+    String residueOne = residue.substring(0,indexOne);
+    String residueTwo = residue.substring(indexOne + 3);
+    textField = residueOne + "=" + residueTwo + "\n";
+    // System.out.println("Final extracted field: " + textField);
+    BXLLine = BXLLine.replaceAll("[\"(),]","");
+    String [] tokens = BXLLine.split(" ");
+    for (int index = 0; index < tokens.length; index++) {
+      if (tokens[index].startsWith("Origin ")) {
+        tokens[index] = tokens[index].replaceAll("[\"(),]","");
+        String [] coords = tokens[index].split(" ");
+        xCoord = Integer.parseInt(coords[0]);
+        yCoord = Integer.parseInt(coords[1]);
+      }
+    }
+    textSize = defaultTextSize;
+  }
+
   
   public void constructor(String arg)
   {
