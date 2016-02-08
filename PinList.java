@@ -365,7 +365,7 @@ public class PinList {
     indexOne = BXLCompPinDef.indexOf("(PinType");
     indexTwo = BXLCompPinDef.indexOf(")", indexOne);
     String pinType = BXLCompPinDef.substring(indexOne + 9, indexTwo);
-    System.out.println("Pin type:" + pinType);
+    //System.out.println("Pin type:" + pinType);
     for (int index = 0; index < numSlots; index++) {
       for (int index2 = 0; index2 < pinCounts[index]; index2++) {
         if (slotArrays[index][index2].pinNumber() == BXLPinNum) {

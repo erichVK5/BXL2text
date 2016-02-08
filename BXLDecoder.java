@@ -106,11 +106,21 @@ public class BXLDecoder {
 
 
         }
-        System.out.println("Element[\"\" \""
+        try {
+          File newFP = new File(FPName + ".fp");
+          PrintWriter FPOutput = new PrintWriter(newFP);
+          FPOutput.println("Element[\"\" \""
                            + FPName
                            + "\" \"\" \"\" 0 0 0 25000 0 100 \"\"]\n(\n"
                            + newElement
                            + ")");
+          FPOutput.close();
+          System.out.println(FPName + ".fp");
+        } catch(Exception e) {
+          System.out.println("There was an error saving: "
+                             + FPName + ".fp");
+          System.out.println(e);
+        }
         newElement = ""; // reset the variable
       } else if (currentLine.startsWith("Symbol ")) {
         String [] tokens = currentLine.split(" ");
@@ -158,7 +168,7 @@ public class BXLDecoder {
         newElement = "";
       } else if (currentLine.startsWith("Component ")) {
         String [] tokens = currentLine.split(" ");
-        String SymbolName = tokens[1].replaceAll("[\"]","");
+        String symbolName = tokens[1].replaceAll("[\"]","");
         while (textBXL.hasNext() &&
                !currentLine.startsWith("EndComponent")) {
           currentLine = textBXL.nextLine().trim();
@@ -192,9 +202,19 @@ public class BXLDecoder {
             pins.setBXLPinType(currentLine);
           }
         }
-        System.out.println(newSymbol   // we now add pins to the
-                           + pins.toString(0,0) // the header, and then
-                           + symAttributes); // the final attributes
+        try {
+          File newSym = new File(symbolName + ".sym");
+          PrintWriter symOutput = new PrintWriter(newSym);
+          symOutput.println(newSymbol   // we now add pins to the
+                            + pins.toString(0,0) // the header, and then
+                            + symAttributes); // the final attributes
+          symOutput.close();
+          System.out.println(symbolName + ".sym");
+        } catch(Exception e) {
+          System.out.println("There was an error saving: "
+                             + symbolName + ".sym"); 
+          System.out.println(e);
+        }
         symAttributes = "";
       }
     }
