@@ -1,6 +1,8 @@
 # BXL2text
 A utility to convert huffman encoded BXL schematic and footprint files to plain text, and undertake further conversion to FOSS EDA compatible formats.
 
+BXL files are a vendor neutral and EDA package neutral file format used by device vendors to distribute schematic symbols and footprints for use in EDA tools such as, but not limited to, gEDA, for PCB and circuit design.
+
 The Huffman decoding portion of this utility is based on vala code originally developed by Geert Jordaens, and uses adaptive Huffman decoding.
 
 Conversion of BXL encoded SMD and through hole footprints into a single file of gEDA PCB footprints has now been achieved, utilising the BXL encoded padstack definitions.
@@ -11,12 +13,13 @@ The issue of BXL files using an inverted y-axis relative to gEDA / kicad has bee
 
 Working gschem symbols are now exported, appended to the file of extracted footprints. Attribute fields defined in the BXL file are also appended to the symbol.
 
+Compatible footprints are listed in the decoded symbol's "footprint=..." attribute field, and additional compatible footprints are listed in "alt-footprint=..." attribute fields.
+
 The utility can export either Huffman decoded data as plain text, or perform further conversion.
 
 To do:
 
 - saving of individual, converted footprints and symbols (until then, use a text editor to split them)
-- adding the converted footprint names to the symbol's footprint= attribute field 
 - combining this code with KicadModuleToGEDA and KicadSymbolToGEDA
 
 Licence: GPL2
@@ -47,5 +50,7 @@ Example usage:
 
 	java BXLDecoder BXLFILE.bxl -t > BXLFILE.txt
 
-	java BXLDecoder BXLFILE.bxl > concatenatedPCBFootprintsAndSymbols.fp
+	java BXLDecoder BXLFILE.bxl > concatenatedPCBFootprintsAndSymbols.symAndFPs
+
+then use a text editor to extract your footprints and symbol... but only until I implement discrete file saving.... then it will be "automagic"
 
