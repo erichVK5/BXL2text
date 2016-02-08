@@ -199,7 +199,11 @@ public class SymbolText extends SymbolElement
 
   public static String BXLAttributeString(long xOffset, long yOffset, String attribute) {
     String extract = "";
-    if (!attribute.startsWith("refdes=")) {
+    if (attribute.startsWith("refdes=") ||
+        attribute.startsWith("footprint=") ||
+        attribute.startsWith("alt-footprint=")) {
+      extract = attribute;
+    } else {
       int indexOne = attribute.indexOf("(Attr ");
       int indexTwo = attribute.indexOf(")", indexOne);
       attribute = attribute.substring(indexOne + 6, indexTwo);
@@ -207,8 +211,6 @@ public class SymbolText extends SymbolElement
       extract = attribute.substring(0,indexOne);
       extract = extract + "=" + attribute.substring(indexOne + 3); 
       extract = extract.replaceAll("\"", "");
-    } else {
-      extract = attribute;
     }
     return attributeString(xOffset, yOffset, extract);
   }

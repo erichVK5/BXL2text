@@ -175,20 +175,11 @@ public class BXLDecoder {
           if (currentLine.startsWith("Attribute")) {
             SymbolText attrText = new SymbolText();
             attrText.populateBXLElement(currentLine);
-            if (symAttributes.length() == 0 || 
-                symAttributes.charAt(symAttributes.length()-1)
-                == '\n') {
-              symAttributes = symAttributes
-                  + SymbolText.BXLAttributeString(0,0, currentLine);
-            } else {
-              symAttributes = symAttributes
-                  + SymbolText.BXLAttributeString(0,0, currentLine);
-            }
+            symAttributes = symAttributes
+                + SymbolText.BXLAttributeString(0,0, currentLine);
           } else if (currentLine.startsWith("RefDesPrefix")) {
             currentLine = currentLine.replaceAll(" ", "");
             currentLine = currentLine.split("\"")[1];
-            // System.out.println("Extracted refdesprefix: "
-            // + currentLine);
             String refDesAttr = "refdes=" + currentLine + "?";
             symAttributes = symAttributes
                   + SymbolText.BXLAttributeString(0,0, refDesAttr);
@@ -198,6 +189,12 @@ public class BXLDecoder {
             String FPAttr = "footprint=" + currentLine;
             symAttributes = symAttributes
                   + SymbolText.BXLAttributeString(0,0, FPAttr);
+          } else if (currentLine.startsWith("AlternatePattern")) {
+            currentLine = currentLine.replaceAll(" ", "");
+            currentLine = currentLine.split("\"")[1];
+            String AltFPAttr = "alt-footprint=" + currentLine;
+            symAttributes = symAttributes
+                  + SymbolText.BXLAttributeString(0,0, AltFPAttr);
           } else if (currentLine.startsWith("CompPin ")) {
             pins.setBXLPinType(currentLine);
           }
