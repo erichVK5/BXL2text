@@ -31,42 +31,45 @@ public class BXLDecoder {
 
   public static void main (String [] args) {
 
-    boolean textOutput = false;
+    boolean textOutputOnly = false;
     String filename = "";
 
     if (args.length == 0) {
       printHelp();
       System.exit(0);
     } else {
-      filename = args [0];
+      filename = args[0];
     }
-
+    
     if (args.length == 2) {
       if (args[1].equals("-t")) {
-        textOutput = true;
+        textOutputOnly = true;
       }
     }
 
     SourceBuffer buffer = new SourceBuffer(filename); 
 
-    if (textOutput) {
+    if (textOutputOnly) {
       System.out.println(buffer.decode());
       System.exit(0);
     }
 
     Scanner textBXL = new Scanner(buffer.decode());
 
+    //parseBXL(decodedBXL);
+    
+    //}
 
+  //private static void parseBXL(Scanner textBXL) {
     String currentLine = "";
     String newElement = "";
     String newSymbol = "";
     String symAttributes = "";
     PadStackList padStacks = new PadStackList();
+    PinList pins = new PinList(0); // slots = 0
 
     long xOffset = 0;
     long yOffset = 0;
-
-    
     while (textBXL.hasNext()) {
       currentLine = textBXL.nextLine().trim();
       if (currentLine.startsWith("PadStack")) {
@@ -112,7 +115,8 @@ public class BXLDecoder {
       } else if (currentLine.startsWith("Symbol ")) {
         String [] tokens = currentLine.split(" ");
         String SymbolName = tokens[1].replaceAll("[\"]","");
-        PinList pins = new PinList(0); // slots = 0
+        //        PinList pins = new PinList(0); // slots = 0
+        pins = new PinList(0); // slots = 0
         while (textBXL.hasNext() &&
                !currentLine.startsWith("EndSymbol")) {
           currentLine = textBXL.nextLine().trim();
@@ -150,13 +154,11 @@ public class BXLDecoder {
           }
         }
         newSymbol = "v 20110115 1"
-            + newElement
-            + pins.toString(0,0);
+            + newElement; // we have created the header for the symbol
         newElement = "";
       } else if (currentLine.startsWith("Component ")) {
         String [] tokens = currentLine.split(" ");
         String SymbolName = tokens[1].replaceAll("[\"]","");
-        PinList pins = new PinList(0); // slots = 0
         while (textBXL.hasNext() &&
                !currentLine.startsWith("EndComponent")) {
           currentLine = textBXL.nextLine().trim();
@@ -168,11 +170,9 @@ public class BXLDecoder {
                 == '\n') {
               symAttributes = symAttributes
                   + SymbolText.BXLAttributeString(0,0, currentLine);
-                  //+ attrText.toString(0,0, false);
             } else {
               symAttributes = symAttributes
                   + SymbolText.BXLAttributeString(0,0, currentLine);
-                  //+ attrText.toString(0,0, false);
             }
           } else if (currentLine.startsWith("RefDesPrefix")) {
             currentLine = currentLine.replaceAll(" ", "");
@@ -180,28 +180,25 @@ public class BXLDecoder {
             // System.out.println("Extracted refdesprefix: "
             // + currentLine);
             String refDesAttr = "refdes=" + currentLine + "?";
-            if (symAttributes.length() == 0 || 
-                symAttributes.charAt(symAttributes.length()-1)
-                == '\n') {
-              symAttributes = symAttributes
+            symAttributes = symAttributes
                   + SymbolText.BXLAttributeString(0,0, refDesAttr);
-                  //+ SymbolText.attributeString(0,0, refDesAttr);
-            } else {
-              symAttributes = symAttributes
-                  + SymbolText.BXLAttributeString(0,0, refDesAttr);
-                  //+ "\n"
-                  //+ SymbolText.attributeString(0,0, refDesAttr);
-            }
+          } else if (currentLine.startsWith("PatternName")) {
+            currentLine = currentLine.replaceAll(" ", "");
+            currentLine = currentLine.split("\"")[1];
+            String FPAttr = "footprint=" + currentLine;
+            symAttributes = symAttributes
+                  + SymbolText.BXLAttributeString(0,0, FPAttr);
+          } else if (currentLine.startsWith("CompPin ")) {
+            pins.setBXLPinType(currentLine);
           }
         }
-        System.out.println(newSymbol + symAttributes);
+        System.out.println(newSymbol   // we now add pins to the
+                           + pins.toString(0,0) // the header, and then
+                           + symAttributes); // the final attributes
         symAttributes = "";
       }
-
-
     }
-    
-  }    
+  }      
 
   public static void printHelp() {
     System.out.println("usage:\n\n\tjava BXLDecoder BXLFILE.bxl\n\n"
