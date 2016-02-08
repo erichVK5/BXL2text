@@ -1,5 +1,5 @@
 # BXL2text
-A utility to convert huffman encoded BXL schematic and footprint files to plain text, and undertake further conversion to FOSS EDA compatible formats.
+A utility to convert huffman encoded BXL schematic and footprint files to plain text, and undertake further conversion to FOSS EDA compatible formats, which for now is gEDA, but Kicad support is planned.
 
 BXL files are a vendor neutral and EDA package neutral file format used by device vendors to distribute schematic symbols and footprints for use in EDA tools such as, but not limited to, gEDA, for PCB and circuit design.
 
@@ -21,6 +21,7 @@ To do:
 
 - saving of individual, converted footprints and symbols (until then, use a text editor to split them)
 - combining this code with KicadModuleToGEDA and KicadSymbolToGEDA
+- kicad format export
 
 Licence: GPL2
 
