@@ -11,7 +11,7 @@ Top layer silkscreen lines and arcs are converted as well.
 
 The issue of BXL files using an inverted y-axis relative to gEDA / kicad has been addressed.
 
-Working gschem symbols are now exported, appended to the file of extracted footprints. Attribute fields defined in the BXL file are also appended to the symbol.
+Individual gEDA PCB compatible footprints and gEDA gschem compatible symbols are now extracted, and saved individually with .fp and .sym file endings, respectively. Attribute fields defined in the BXL file are also appended to the symbol.
 
 Compatible footprints are listed in the decoded symbol's "footprint=..." attribute field, and additional compatible footprints are listed in "alt-footprint=..." attribute fields.
 
@@ -19,9 +19,9 @@ The utility can export either Huffman decoded data as plain text, or perform fur
 
 To do:
 
-- saving of individual, converted footprints and symbols (until then, use a text editor to split them)
 - combining this code with KicadModuleToGEDA and KicadSymbolToGEDA
 - kicad format export
+- option to translate gschem symbol from 0,0 to bottom left of gschem display area 
 
 Licence: GPL2
 
@@ -51,7 +51,6 @@ Example usage:
 
 	java BXLDecoder BXLFILE.bxl -t > BXLFILE.txt
 
-	java BXLDecoder BXLFILE.bxl > concatenatedPCBFootprintsAndSymbols.symAndFPs
+	java BXLDecoder BXLFILE.bxl 
 
-then use a text editor to extract your footprints and symbol... but only until I implement discrete file saving.... then it will be "automagic"
 
