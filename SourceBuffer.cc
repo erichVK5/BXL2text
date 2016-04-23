@@ -1,0 +1,309 @@
+// SourceBuffer.cc - C++ code for converting Huffman encoded files
+// into text, ported to C++ from the vala code by Geert Jordaens
+//
+// NodeTree - a tree used for the Huffman decoding
+// Node - node in the tree used for the Huffman decoding
+// SourceBuffer.cc v1.0
+
+// Copyright (C) 2016 Erich S. Heinzle, a1039181@gmail.com
+
+//    see LICENSE-gpl-v2.txt for software license
+//    see README.txt
+//    
+//    This program is free software; you can redistribute it and/or
+//    modify it under the terms of the GNU General Public License
+//    as published by the Free Software Foundation; either version 2
+//    of the License, or (at your option) any later version.
+//    
+//    This program is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//    
+//    You should have received a copy of the GNU General Public License
+//    along with this program; if not, write to the Free Software
+//    Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+//    
+//    SourceBuffer.cc Copyright (C) 2016 Erich S. Heinzle a1039181@gmail.com
+
+
+#include <iostream>
+#include <stdio.h>
+#include <string>
+
+using namespace std;
+
+class Node {
+
+ public:
+  int      level = 0; 
+  Node     *parent = 0;
+  Node     *left = 0;
+  Node     *right = 0;
+  int      symbol = -1;
+  int      weight = 0;
+
+  ~Node () {
+      if (left != 0) {
+          delete left;
+          left = 0;
+      }
+      if (right != 0) {
+          delete right;
+          right = 0;
+      }
+  }
+  
+  Node () {
+    //this.level = 0;
+  }
+  
+  Node (Node *parent, int symbol) {
+    if (parent != 0) {
+      this->parent = parent;
+      this->level  = parent->level+1;
+    } else {
+      this->level = 0;
+    }
+    if (level > 7) {
+      this->symbol = symbol;
+    }
+  }
+
+  Node* add_child(int symbol){
+    Node *ret = 0;
+    if (level < 7) {
+      if (right != 0) {
+        ret = right->add_child(symbol);
+        if (ret != 0) return ret;
+      }
+      if (left != 0) {
+        ret = left->add_child(symbol);
+        if (ret != 0) return ret;
+      }
+      if (right == 0) {  // first fill right branch
+        right = new Node (this, -1);
+        return right;
+      }
+      if (left == 0) {
+        left = new Node (this, -1);
+        if (left !=0) return left;
+      }
+      return 0;
+    } else {
+      if (right == 0) {
+        right = new Node (this, symbol);
+        return right;
+      } else if (left == 0) {
+        left = new Node (this, symbol);
+        return left;
+      } else {
+        return 0; // Leaves are filled
+      }
+    }
+  }
+
+  bool is_leaf() {
+    return (level > 7);
+  }
+
+  Node* sibling(Node *node){
+    if  (node != right) {
+      return right;
+    } else  {
+      return left;
+    }
+  }
+
+  void incrementWeight() {
+    this->weight++;
+  }
+
+  bool need_swapping() {
+    if (parent != 0 &&
+        parent->parent != 0 && // root node
+        this->weight > parent->weight) {
+      return true;
+    }
+    return false;
+  }
+};
+
+class NodeTree {
+
+ public:
+      Node *root = 0;
+
+  NodeTree() {
+    // create root node
+    Node *node = new Node(0, 0);
+    root = node;
+    int leaf_count = 0;
+    // fill levels
+    while(node != 0) {
+      node = root->add_child(leaf_count);
+      if(node != 0 && node->is_leaf()) { leaf_count++; }
+    }
+  }
+
+  Node* getRoot() {
+    return root;
+  }
+
+  void swap (Node *n1, Node *n2, Node *n3) {
+      if (n3 != 0)     {   n3->parent   = n1;}
+      if (n1->right == n2) {   n1->right    = n3; return; }
+      if (n1->left == n2)  {   n1->left     = n3; return; }
+  }
+
+  void update_tree(Node *current) {
+    // System.out.println("Updating tree...");
+    if (current != 0 && current->need_swapping()) {
+      Node *parent = current->parent;
+      Node *grand_parent = parent->parent;
+      Node *parent_sibling = grand_parent->sibling(parent);
+      swap(grand_parent, parent,  current);
+      swap(grand_parent, parent_sibling, parent);
+      swap(parent, current, parent_sibling);
+      parent->weight = parent->right->weight + parent->left->weight;
+      grand_parent->weight = current->weight + parent->weight;
+      update_tree(parent);
+      update_tree(grand_parent);
+      update_tree(current);
+    }
+  }
+
+};
+
+typedef unsigned char BYTE;
+
+// Get the size of a file
+long getFileSize(FILE *file) {
+    long lCurPos, lEndPos;
+    lCurPos = ftell(file);
+    fseek(file, 0, 2);
+    lEndPos = ftell(file);
+    fseek(file, lCurPos, 0);
+    return lEndPos;
+}
+
+class SourceBuffer {
+
+private:
+
+    BYTE *source_buffer = 0;
+    BYTE *fileBuf;
+    int source_index = 4;
+    int source_char = 0;
+    long fileSize = 0;
+    int bit = 0;
+
+public:
+
+    SourceBuffer(char *filename) {
+
+        FILE *file = 0;      // File pointer
+        // Open the file in binary mode using the "rb" format string
+        // checks if file exists and/or can be opened correctly
+        if ((file = fopen(filename, "rb")) == 0)
+            cout << "Couldn't open file" << filename << endl;
+        else
+            cout << filename << " opened successfully" << endl;
+        // Get size of file in bytes
+        fileSize = getFileSize(file);
+        // Allocate space in the buffer for the whole file
+        fileBuf = new BYTE[fileSize];
+        // Read the file in to the buffer
+        fread(fileBuf, fileSize, 1, file);
+        fclose(file);
+        source_buffer = fileBuf;
+    }
+
+    int read_next_bit() {
+        int result = 0;
+        if (bit < 0) {
+            // Fetch next byte from source_buffer
+            bit = 7;
+            source_char = (int)source_buffer[source_index];
+            result = source_char & (1 << bit);
+            source_index++;
+        } else {
+            result = source_char & (1 << bit);
+        }
+        bit--;
+        return result;
+    }
+
+    int uncompressed_size() {
+        /* Uncompressed size =
+           B0b7 * 1<<0 + B0b6 * 1<<1 + ... + B0b0 * 1<<7 +
+           B1b7 * 1<<0 + B1b6 * 1<<1 + ... + B2b0 * 1<<7 +
+           B2b7 * 1<<0 + B2b6 * 1<<1 + ... + B3b0 * 1<<7 +
+           B3b7 * 1<<0 + B3b6 * 1<<1 + ... + B4b0 * 1<<7
+        */
+        int size = 0;
+        int mask = 0;
+        for (int i = 7 ; i >=0 ; i--) {
+            if ((source_buffer[0] & (1 << i)) != 0) {
+                size |= (1 << mask);
+            }
+            mask++;
+        }
+        for (int i = 7 ; i >=0 ; i--) {
+            if ((source_buffer[1] & (1 << i)) != 0) {
+                size |= (1<<mask);
+            }
+            mask++;
+        }
+        for (int i = 7 ; i >=0 ; i--) {
+            if ((source_buffer[2] & (1 << i)) != 0) {
+                size |= (1<<mask);
+            }
+            mask++;
+        }
+        for (int i = 7 ; i >=0 ; i--) {
+            if ((source_buffer[3] & (1 << i)) != 0) {
+                size |= (1<<mask);
+            }
+            mask++;
+        }
+        return size;
+    }
+
+  string decode() {
+      
+      NodeTree *tree = new NodeTree();
+      
+      int out_file_length = uncompressed_size();
+      string sb = "";
+      while (source_index < fileSize) {
+          Node *node = tree->getRoot();
+          while (!node->is_leaf()) {
+              // find leaf node
+              if (read_next_bit() != 0) {
+                  node = node->left;
+              } else {
+                  node = node->right;
+              }
+          }
+          sb = sb + (char)(node->symbol);
+          //      sb = sb + node;
+          //      sb = sb + ((char)(node.symbol & 0xff));
+          //      node.weight += 1;
+          node->incrementWeight();
+          //                   sb + ", now to update tree...");
+          tree->update_tree(node);
+      }
+      //source_buffer = null; // not needed for standalone utility
+      //is_filled = false;
+      return sb;
+  }
+
+};
+
+int main() {
+    char* fn = "MKL27Z256VFM4.bxl";
+    SourceBuffer *sb = new SourceBuffer(fn);
+    cout << sb->decode() << endl;
+    return 0;
+}
