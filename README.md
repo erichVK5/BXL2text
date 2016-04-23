@@ -17,6 +17,8 @@ Compatible footprints are listed in the decoded symbol's "footprint=..." attribu
 
 The utility can export either Huffman decoded data as plain text, or perform further conversion.
 
+The Huffman decoding portion of the utility has been ported to some quick and dirty C++ and can be found in SourceBuffer.cc for anyone with a need to decode adaptively encoded Huffman files using C++.
+
 To do:
 
 - combining this code with KicadModuleToGEDA and KicadSymbolToGEDA
