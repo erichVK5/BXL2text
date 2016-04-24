@@ -44,15 +44,18 @@ class Node {
   int      weight = 0;
 
   ~Node () {
-      if (left != 0) {
-          delete left;
-          left = 0;
-      }
-      if (right != 0) {
-          delete right;
-          right = 0;
-      }
   }
+
+    void deleteChildren(Node *target) {
+        if (target->left != 0) {
+            target->deleteChildren(target->left);
+        }
+        if (target->right != 0) {
+            target->deleteChildren(target->right);
+        }
+        delete target;
+    }
+
   
   Node () {
     //this.level = 0;
@@ -129,10 +132,21 @@ class Node {
   }
 };
 
+
+
 class NodeTree {
 
  public:
       Node *root = 0;
+
+  ~NodeTree() {
+      if (root != 0) {
+          root->deleteChildren(root->left);
+          root->deleteChildren(root->right);
+          delete root;
+          root = 0;
+      }
+  }
 
   NodeTree() {
     // create root node
@@ -150,6 +164,15 @@ class NodeTree {
     return root;
   }
 
+  void cleanUp() {
+      if (root != 0) {
+          root->deleteChildren(root->left);
+          root->deleteChildren(root->right);
+          delete root;
+          root = 0;
+      }
+  }
+
   void swap (Node *n1, Node *n2, Node *n3) {
       if (n3 != 0)     {   n3->parent   = n1;}
       if (n1->right == n2) {   n1->right    = n3; return; }
@@ -157,7 +180,6 @@ class NodeTree {
   }
 
   void update_tree(Node *current) {
-    // System.out.println("Updating tree...");
     if (current != 0 && current->need_swapping()) {
       Node *parent = current->parent;
       Node *grand_parent = parent->parent;
@@ -172,7 +194,7 @@ class NodeTree {
       update_tree(current);
     }
   }
-
+    
 };
 
 typedef unsigned char BYTE;
@@ -192,7 +214,6 @@ class SourceBuffer {
 private:
 
     BYTE *source_buffer = 0;
-    BYTE *fileBuf;
     int source_index = 4;
     int source_char = 0;
     long fileSize = 0;
@@ -200,8 +221,15 @@ private:
 
 public:
 
-    SourceBuffer(char *filename) {
+    ~SourceBuffer() {
+        if (source_buffer != 0) {
+            delete [] source_buffer;
+            source_buffer = 0;
+        }
 
+    }
+
+    SourceBuffer(char *filename) {
         FILE *file = 0;      // File pointer
         // Open the file in binary mode using the "rb" format string
         // checks if file exists and/or can be opened correctly
@@ -212,11 +240,10 @@ public:
         // Get size of file in bytes
         fileSize = getFileSize(file);
         // Allocate space in the buffer for the whole file
-        fileBuf = new BYTE[fileSize];
+        source_buffer = new BYTE[fileSize];
         // Read the file in to the buffer
-        fread(fileBuf, fileSize, 1, file);
+        fread(source_buffer, fileSize, 1, file);
         fclose(file);
-        source_buffer = fileBuf;
     }
 
     int read_next_bit() {
@@ -287,23 +314,22 @@ public:
               }
           }
           sb = sb + (char)(node->symbol);
-          //      sb = sb + node;
-          //      sb = sb + ((char)(node.symbol & 0xff));
-          //      node.weight += 1;
           node->incrementWeight();
-          //                   sb + ", now to update tree...");
           tree->update_tree(node);
       }
-      //source_buffer = null; // not needed for standalone utility
-      //is_filled = false;
+      tree->cleanUp();
+      delete tree;
+      tree = 0;
       return sb;
   }
 
 };
 
 int main() {
-    char* fn = "MKL27Z256VFM4.bxl";
+    string filename = "LM339_N_14.bxl"; //"MKL27Z256VFM4.bxl";
+    char* fn = (char*)filename.c_str();	
     SourceBuffer *sb = new SourceBuffer(fn);
     cout << sb->decode() << endl;
+    delete sb;
     return 0;
 }
