@@ -19,7 +19,7 @@ The utility can export either Huffman decoded data as plain text, or perform fur
 
 The Huffman decoding portion of the utility has been ported to some quick and dirty C++ and can be found in SourceBuffer.cc for anyone with a need to decode adaptively encoded Huffman files using C++.
 
-This code is now included in the translate2geda utility, which can also convert many other formats to gEDA compatible design elements, such as symdef, LT-Spice (.asc), QUCS (.sch), Eagle XML symbols and footprints, BDSL (.bds), and IBIS (.ibs) formats.
+This code is now included in the translate2geda utility, which can also convert many other formats to gEDA compatible design elements, such as symdef, LT-Spice (.asc), QUCS (.sch), Eagle XML symbols and footprints, BSDL (.bsd), IBIS (.ibs), and Gerber formats.
 
 To do:
 
