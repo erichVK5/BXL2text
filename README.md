@@ -25,6 +25,7 @@ To do:
 
 - kicad format export
 - option to translate gschem symbol from 0,0 to bottom left of gschem display area 
+- ongoing development work for the component classes is being done mostly in the translate2geda utility, but the improved classes will be put here from time to time
 
 Licence: GPL2
 
