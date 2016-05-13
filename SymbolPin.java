@@ -1,5 +1,5 @@
 // KicadSymbolToGEDA - a utility for turning kicad modules to gEDA PCB footprints
-// SymbolPin.java v1.0
+// SymbolPin.java v1.1
 // Copyright (C) 2015 Erich S. Heinzle, a1039181@gmail.com
 
 //    see LICENSE-gpl-v2.txt for software license
@@ -53,6 +53,12 @@ public class SymbolPin extends SymbolElement
   // generated if batches of symbols being done...
   static int pinSeqTally = 0;
 
+  static int BSDLYCoordL = 0; // for use in BSDL file conversion
+  static int BSDLYCoordR = 0; // for use in BSDL file conversion
+
+  static int symdefXCoord = 0; // for use in symdef file conversion
+  static int symdefYCoord = 0; // for use in symdef file conversion
+
   String pinDescriptor = "";
   String output = "";
   
@@ -102,14 +108,27 @@ public class SymbolPin extends SymbolElement
     pinSeqTally = 0;
   }
 
-  public void SymbolPin()
+  public SymbolPin()
   {
     output = "#Hmm, the no arg symbol pin constructor didn't do much";
   }
   
   public SymbolPin copy() {
     SymbolPin copyOf = new SymbolPin();
-    copyOf.constructor(this.pinDescriptor);
+    copyOf.xCoord1 = this.xCoord1;
+    copyOf.yCoord1 = this.yCoord1;
+    copyOf.xCoord2 = this.xCoord2;
+    copyOf.yCoord2 = this.yCoord2;
+    copyOf.yCoord2 = this.yCoord2;
+    copyOf.yCoord2 = this.yCoord2;
+    copyOf.pinName = this.pinName;
+    copyOf.pinNumber = this.pinNumber;
+    copyOf.pinDesc = this.pinDesc;
+    copyOf.pinLength = this.pinLength;
+    copyOf.pinDirection = this.pinDirection;
+    copyOf.pinEType = this.pinEType;
+    copyOf.kicadUnit = this.kicadUnit;
+    copyOf.organiseLabelAndPinCoords();
     return copyOf;
   }
 
@@ -118,6 +137,207 @@ public class SymbolPin extends SymbolElement
     copyOf.constructor(orig.pinDescriptor);
     return copyOf;
   }
+
+  // used mostly for files with extended whitespace
+  private String prepareForSplit(String rawLine) {
+    // get rid of unnecessary punctuation
+    // and leading/trailing whitespace
+    rawLine = rawLine.trim().replaceAll("[\":,]","");
+    // then reduce whitespace to single spaces only
+    return rawLine.replaceAll(" \\s*"," ");
+  }
+
+  // this is used to create a pin based on the pin number, name
+  // descriptors found in an IBIS file. Much like BSDL or
+  // csv pain mapping data. 
+  public void populateIBISElement(String IBISLine) {
+    String [] tokens = prepareForSplit(IBISLine).split(" ");
+    pinLength = 300; // a reasonable default value
+    BSDLYCoordL += 200; //  a reasonable pin spacing
+    xCoord1 = 0;
+    yCoord1 = BSDLYCoordL; // we can use the same Y offset variable
+    pinNumber = tokens[0]; // we used for the BSDL constructor
+    pinName = tokens[1];
+    //    System.out.println(pinNumber);
+    pinDirection = "R"; // default single line of pins, active -> LHS.
+
+    super.updateXdimensions(xCoord1);
+    super.updateYdimensions(yCoord1);
+    organiseLabelAndPinCoords();
+
+    kicadUnit = 0; // assume only one slot
+    pinEType = "pas"; // default for now, may be able to fix
+    // by parsing the pin description in the IBIS file. Meh.
+
+  }
+
+  public void populateSymDefElement(String symDefLine, String dir) {
+    String [] tokens = symDefLine.split(" ");
+    pinLength = 300; // a reasonable default value
+    if (dir.equals("L")) {
+        symdefYCoord += 200; //  a reasonable pin spacing
+    } else if (dir.equals("D")) {
+        symdefXCoord += 200; //  a reasonable pin spacing
+    } else if (dir.equals("R")) {
+        symdefYCoord -= 200; //  a reasonable pin spacing
+    } else if (dir.equals("U")) {
+        symdefXCoord -= 200; //  a reasonable pin spacing
+    }
+    xCoord1 = symdefXCoord;
+    yCoord1 = symdefYCoord;
+    pinNumber = tokens[0];
+    if (tokens.length == 3) {
+      pinName = tokens[2];
+    } else {
+      pinName = tokens[1];
+    }
+    pinDirection = dir; // default single line of pins, active -> LHS.
+
+    super.updateXdimensions(xCoord1);
+    super.updateYdimensions(yCoord1);
+    organiseLabelAndPinCoords();
+
+    kicadUnit = 0; // assume only one slot
+    pinEType = "pas"; // default for now, may be able to fix...
+
+  }
+
+
+  public void populateBSDLElement(String BSDLLine) {
+    //System.out.println("BSDLLine passed to new pin: " + BSDLLine);
+    String [] tokens = prepareForSplit(BSDLLine).split(" ");
+    pinLength = 300; // a reasonable default value
+    BSDLYCoordL += 200; //  a reasonable pin spacing
+    xCoord1 = 0;
+    yCoord1 = BSDLYCoordL;
+    pinNumber = tokens[1];
+    pinName = tokens[0];
+
+    pinDirection = "R"; // default single line of pins, active -> LHS.
+
+    super.updateXdimensions(xCoord1);
+    super.updateYdimensions(yCoord1);
+    organiseLabelAndPinCoords();
+
+    kicadUnit = 0; // assume only one slot
+    pinEType = "pas"; // default for now, may be able to fix...
+
+  }
+
+  public void resetBSDLYCoords() {
+    BSDLYCoordL = 0;
+    BSDLYCoordR = 0;
+  }
+
+  public void propagateSpacing(SymbolPin previous, int amount) {
+    if (previous.pinDirection.equals("R")) {
+      setNewActiveOrigin(previous.xCoord1,
+                         previous.yCoord1 - amount);
+    } else if (previous.pinDirection.equals("L")) {
+      setNewActiveOrigin(previous.xCoord1,
+                         previous.yCoord1 + amount);
+    } else if (previous.pinDirection.equals("U")) {
+      setNewActiveOrigin(previous.xCoord1 + amount,
+                         previous.yCoord1);
+    } else if (previous.pinDirection.equals("D")) {
+      setNewActiveOrigin(previous.xCoord1 - amount,
+                         previous.yCoord1);
+    }
+  }
+
+  public void shiftSymDefPinToRight(int width) {
+    setNewActiveX(xCoord1 += width);
+    // a reasonable (symbol width + 2*(pin length))
+    // yCoord1 = BSDLYCoordL;
+    organiseLabelAndPinCoords();
+  }
+
+
+  public void shiftBSDLPinToRHS(int width) {
+    //    BSDLYCoordL += 200; //  a reasonable pin spacing
+    setPinDirection("L"); // 'L' implies active end -> RHS
+    setNewActiveX(xCoord1 += width);
+    // a reasonable (symbol width + 2*(pin length))
+    // yCoord1 = BSDLYCoordL;
+    organiseLabelAndPinCoords();
+  }
+
+  private long mmTextToNM(String mmValue) {
+    mmValue = mmValue.replaceAll("[\"]","");
+    return (long)(1000000*Float.parseFloat(mmValue)); 
+  }
+
+  private long mmTextToMil(String mmValue) {
+    return (long)(mmTextToNM(mmValue)/25400);
+  }
+
+  public void populateEagleElement(String EagleLine) {
+    pinDescriptor = EagleLine;
+    pinLength = 200; //default
+    String EagleEType = "pas"; // default
+    // we ruin the subsequent pin mapping if we replace too much
+    //EagleLine = EagleLine.replaceAll("[\"(),/>]","");
+    EagleLine = EagleLine.replaceAll("[\"/>]","");
+    // this replacement list must match that in EagleDevice
+    String [] tokens = EagleLine.split(" ");
+    int pinRotation = 0; // default LHS pin, i.e. 'R'
+    for (int index = 0; index < tokens.length; index++) {
+      if (tokens[index].startsWith("x=")) {
+        xCoord2 = mmTextToMil(tokens[index].substring(2));
+      } else if (tokens[index].startsWith("y=")) {
+        yCoord2 = mmTextToMil(tokens[index].substring(2));
+      } else if (tokens[index].startsWith("direction=")) {
+        EagleEType = tokens[index].substring(10);
+      } else if (tokens[index].startsWith("name=")) {
+        pinDesc = tokens[index].substring(5);
+        pinName = pinDesc;
+      } else if (tokens[index].startsWith("rot=R")) {
+        pinRotation = Integer.parseInt(tokens[index].substring(5));
+      } else if (tokens[index].startsWith("length=short")) {
+        pinLength = 100;
+      } else if (tokens[index].startsWith("length=medium")) {
+        pinLength = 200;
+      }
+
+    }
+
+    pinNumber = "0";
+
+    // the following code makes nice, readable symbols but
+    // they are bigger than specified by Eagle symbol defs by about
+    // a pin length, i.e. x1,y1, and x2,y2 have been swapped
+    // to make the active end of the pin outermost and further out
+    // would need to reverse this if exact geometry needs to be
+    // conserved, i.e. if converting an eagle schematic
+
+    if (pinRotation == 0) {
+      pinDirection = "R";
+      xCoord1 = xCoord2 - pinLength;
+      yCoord1 = yCoord2;
+    } else if (pinRotation == 180) {
+      pinDirection = "L";
+      xCoord1 = xCoord2 + pinLength;
+      yCoord1 = yCoord2;
+    } else if (pinRotation == 90) {
+      pinDirection = "U";
+      yCoord1 = yCoord2 - pinLength;
+      xCoord1 = xCoord2;
+    } else if (pinRotation == 270) {
+      pinDirection = "D";
+      yCoord1 = yCoord2 + pinLength;
+      xCoord1 = xCoord2;
+    } 
+
+    super.updateXdimensions(xCoord1);
+    super.updateYdimensions(yCoord1);
+    organiseLabelAndPinCoords();
+
+    kicadUnit = 0; // assume only one slot
+    pinEType = EagleEType; // Eagle used pretty much the same notation
+    // except for "nc" = not connected
+  }
+
+
 
   public void populateBXLElement(String BXLLine) {
     pinDescriptor = BXLLine;
@@ -188,22 +408,54 @@ public class SymbolPin extends SymbolElement
     kicadUnit = Integer.parseInt(tokens[9]);
 
     kicadEType = tokens[11]; // the electrical type of the pin
-    if (kicadEType.equals("I")) {
+    setPinType(kicadEType); // now set it
+  }    
+
+  public void setPinType(String pinType) {
+    if (pinType.equals("I") 
+        || pinType.equals("Input")) {
       pinEType = "in";
-    } else if (kicadEType.equals("O")) {
+    } else if (pinType.equals("O")
+               || pinType.equals("Output")) {
       pinEType = "out";
-    } else if (kicadEType.equals("T")) {
+    } else if (pinType.equals("T")) {
       pinEType = "tri";
-    } else if (kicadEType.equals("W") || kicadEType.equals("w")) {
+    } else if (pinType.equals("Bi-Directional")) {
+      pinEType = "io";
+    } else if (pinType.equals("W")
+               || pinType.equals("w")
+               || pinType.equals("Power")) {
       pinEType = "pwr";
-    } else if (kicadEType.equals("C")) {
+    } else if (pinType.equals("C")) {
       pinEType = "oc";
-    } else if (kicadEType.equals("E")) {
+    } else if (pinType.equals("E")) {
       pinEType = "oe";
     } else {
       pinEType = "pas"; // default setting catches bidir, unspec. 
     } // kicad has no gschem totem pole or clock pin equivalents
+    // BXL also has an 'any' type
+  }
 
+  // this method is for .bsd port definitions which provide
+  // the pin type
+  public void setBSDPinType(String [] pinType) {
+    if (pinType[0].equals(pinName)) {
+      if (pinType[1].equals("inout")) { 
+        pinEType = "io";
+      } else if (pinType[1].equals("linkage")) {
+        pinEType = "pwr";
+      } else if (pinType[1].equals("in")) {
+        pinEType = "in";
+      } else if (pinType[1].equals("out")) {
+        pinEType = "out";
+      } else {
+        pinEType = "pas"; // default setting catches bidir, unspec. 
+      } // BSD files have few options, it seems
+    }
+  }
+
+  public String pinName() {
+    return pinName;
   }
 
   public int pinNumber() {
@@ -215,7 +467,7 @@ public class SymbolPin extends SymbolElement
       returnNumber = Integer.parseInt(pinNumber);
     }
     catch (Exception e) {
-      // ho hum
+      System.out.println("In pinNumber() routine; exception:" + e);
     }
     // System.out.println("The pinNumber method returns revised:" + pinNumber);
     return returnNumber;
@@ -308,6 +560,15 @@ public class SymbolPin extends SymbolElement
     organiseLabelAndPinCoords();
   }
 
+  public void setNewActiveOrigin(SymbolPin other) {
+    this.xCoord1 = other.xCoord1;
+    this.yCoord1 = other.yCoord1;
+    this.xCoord2 = other.xCoord2;
+    this.yCoord2 = other.yCoord2;
+    organiseLabelAndPinCoords();
+  }
+
+
   public void setNewInactiveOrigin(long newX, long newY) {
     long deltaX = newX - xCoord2;
     long deltaY = newY - yCoord2;
@@ -332,7 +593,7 @@ public class SymbolPin extends SymbolElement
             + pinType + " "
             + activeEnd  // one implies (xCoord1, yCoord1)
             + "\n{\n" 
-            + attributeFieldPinNumber(pinDesc, pinNumberX + xOffset, pinNumberY + yOffset, pinNumberOrientation, pinNumberAlignment)
+            + attributeFieldPinNumber(pinNumber, pinNumberX + xOffset, pinNumberY + yOffset, pinNumberOrientation, pinNumberAlignment)
             + "\n"
             + attributeFieldPinLabel(pinName, pinNameX + xOffset, pinNameY + yOffset, pinNameOrientation, pinNameAlignment)
             + "\n"
@@ -348,6 +609,35 @@ public class SymbolPin extends SymbolElement
 
   public char pinDirection() {
     return pinDirection.charAt(0);
+  }
+
+  public void setPinDirection(String pinDir) {
+    if (pinDir.equals("U") ||
+        pinDir.equals("D") ||
+        pinDir.equals("L") ||
+        pinDir.equals("R")) {
+      pinDirection = pinDir;
+
+      if (pinDir.equals("L")) {
+        xCoord2 = xCoord1 + pinLength;
+        yCoord2 = yCoord1;
+      } else if (pinDir.equals("R")) {
+        xCoord2 = xCoord1 - pinLength;
+        yCoord2 = yCoord1;
+      } else if (pinDir.equals("D")) {
+        yCoord2 = yCoord1 + pinLength;
+        xCoord2 = xCoord1;
+      } else if (pinDir.equals("U")) {
+        yCoord2 = yCoord1 - pinLength;
+        xCoord2 = xCoord1;
+      } 
+
+      super.updateXdimensions(xCoord1);
+      super.updateYdimensions(yCoord1);
+      super.updateXdimensions(xCoord2);
+      super.updateYdimensions(yCoord2);
+      organiseLabelAndPinCoords();
+    }
   }
 
   private String attributeFieldPinLabel(String pinLabel, long X, long Y, int orientation, int alignment)  {
