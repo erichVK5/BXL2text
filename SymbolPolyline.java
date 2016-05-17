@@ -32,12 +32,12 @@
 
 //P Nb parts convert thickness x0 y0 x1 y1 xi yi cc
 //With:
-//• Nb = a number of points.
-//• unit = 0 if common to the parts; if not, number of part (1. .n).
-//• convert = 0 if common to the 2 representations, if not 1 or 2.
-//• thickness = line thickness.
-//• xi yi coordinates of end i.
-//• cc = N F or F ( F = filled polygon; f = . filled polygon, N = transparent background)
+//- Nb = a number of points.
+//- unit = 0 if common to the parts; if not, number of part (1. .n).
+//- convert = 0 if common to the 2 representations, if not 1 or 2.
+//- thickness = line thickness.
+//- xi yi coordinates of end i.
+//- cc = N F or F ( F = filled polygon; f = . filled polygon, N = transparent background)
 
 
 public class SymbolPolyline extends SymbolElement
