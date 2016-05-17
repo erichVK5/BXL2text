@@ -38,10 +38,10 @@
 
 //S startx starty endx endy unit convert thickness cc
 // With
-//• unit = 0 if common to the parts; if not, number of part (1. .n).
-//• convert = 0if common to all parts. If not, number of the part (1. .n).
-//• thickness = thickness of the outline.
-//• cc = N F or F ( F = filled Rectangle,; f = . filled Rectangle, N = transparent background)
+//- unit = 0 if common to the parts; if not, number of part (1. .n).
+//- convert = 0if common to all parts. If not, number of the part (1. .n).
+//- thickness = thickness of the outline.
+//- cc = N F or F ( F = filled Rectangle,; f = . filled Rectangle, N = transparent background)
 
 
 public class SymbolRectangle extends SymbolElement
