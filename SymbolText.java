@@ -32,10 +32,10 @@
 
 //T orientation posx posy dimension unit convert Text
 //With:
-//• orientation = horizontal orientation (=0) or vertical (=1).
-//• type = always 0.
-//• unit = 0 if common to the parts. If not, the number of the part (1. .n).
-//• convert = 0 if common to the representations, if not 1 or 2.
+//- orientation = horizontal orientation (=0) or vertical (=1).
+//- type = always 0.
+//- unit = 0 if common to the parts. If not, the number of the part (1. .n).
+//- convert = 0 if common to the representations, if not 1 or 2.
 
 public class SymbolText extends SymbolElement
 {
