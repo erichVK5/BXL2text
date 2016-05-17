@@ -32,16 +32,16 @@ import java.lang.Exception;
 
 //X name number posx posy length orientation Snum Snom unit convert Etype [shape].
 //With:
-//• orientation = U (up) D (down) R (right) L (left).
-//• name = name (without space) of the pin. if ~: no name
-//• number = n pin number (4 characters maximum).
-//• length = pin length.
-//• Snum = pin number text size.
-//• Snom = pin name text size.
-//• unit = 0 if common to all parts. If not, number of the part (1. .n).
-//• convert = 0 if common to the representations, if not 1 or 2.
-//• Etype = electric type (1 character)
-//• shape = if present: pin shape (clock, inversion...).
+//- orientation = U (up) D (down) R (right) L (left).
+//- name = name (without space) of the pin. if ~: no name
+//- number = n pin number (4 characters maximum).
+//- length = pin length.
+//- Snum = pin number text size.
+//- Snom = pin name text size.
+//- unit = 0 if common to all parts. If not, number of the part (1. .n).
+//- convert = 0 if common to the representations, if not 1 or 2.
+//- Etype = electric type (1 character)
+//- shape = if present: pin shape (clock, inversion...).
 
 public class SymbolPin extends SymbolElement
 {
