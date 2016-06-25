@@ -30,6 +30,7 @@
 
 import java.io.*;
 import java.util.Scanner;
+import java.lang.StringBuffer;
 
 public class SourceBuffer {
 
@@ -132,7 +133,9 @@ public class SourceBuffer {
     NodeTree tree = new NodeTree();
 
     int out_file_length = uncompressed_size();
-    String sb = "";
+    //String sb = "";
+    // immutable Strings replaced with more efficient string handling, suggested by wlbaker: 
+    StringBuffer sb = new StringBuffer(out_file_length);
     // System.out.println("About to enter decoding while loop...");
     while (source_index < source_buffer.length && sb.length() != out_file_length) {
       //System.out.println("Have entered decoding while loop...");
@@ -152,7 +155,10 @@ public class SourceBuffer {
       }
       // System.out.println("Node symbol: " + (char)(node.symbol));
       // System.out.println("Node symbol as toString: " + node);
-      sb = sb + (char)(node.symbol);
+
+      sb.append((char)node.symbol); // more efficient string building, thanks wlbaker
+      //sb = sb + (char)(node.symbol);
+
       //      sb = sb + node;
       //      sb = sb + ((char)(node.symbol & 0xff));
       //      node.weight += 1;
@@ -163,7 +169,7 @@ public class SourceBuffer {
     }
     //source_buffer = null; // not needed for standalone utility
     //is_filled = false;
-    return sb;
+    return sb.toString();
   }
 
 }
