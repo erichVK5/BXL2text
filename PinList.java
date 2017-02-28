@@ -371,7 +371,7 @@ public class PinList {
     int indexOne = BXLCompPinDef.indexOf("CompPin ");
     int indexTwo = BXLCompPinDef.indexOf(" (", indexOne + 8);
     String pinDesc = BXLCompPinDef.substring(indexOne + 8, indexTwo);
-    System.out.println("PinDesc:" + pinDesc); 
+    //System.out.println("PinDesc:" + pinDesc); 
     pinDesc = pinDesc.replaceAll("\"", "");
     pinDesc = pinDesc.replaceAll(" ", "");
     int BXLPinNum = Integer.parseInt(pinDesc);
