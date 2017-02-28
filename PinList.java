@@ -369,9 +369,12 @@ public class PinList {
   // to the symbol description
   public void setBXLPinType(String BXLCompPinDef) {
     int indexOne = BXLCompPinDef.indexOf("CompPin ");
-    int indexTwo = BXLCompPinDef.indexOf(" ", indexOne + 8);
-    int BXLPinNum
-        = Integer.parseInt(BXLCompPinDef.substring(indexOne + 8, indexTwo));
+    int indexTwo = BXLCompPinDef.indexOf(" (", indexOne + 8);
+    String pinDesc = BXLCompPinDef.substring(indexOne + 8, indexTwo);
+    System.out.println("PinDesc:" + pinDesc); 
+    pinDesc = pinDesc.replaceAll("\"", "");
+    pinDesc = pinDesc.replaceAll(" ", "");
+    int BXLPinNum = Integer.parseInt(pinDesc);
     //System.out.println("Pin num:" + BXLPinNum);
     indexOne = BXLCompPinDef.indexOf("(PinType");
     indexTwo = BXLCompPinDef.indexOf(")", indexOne);

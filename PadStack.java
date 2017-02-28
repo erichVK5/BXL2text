@@ -54,7 +54,7 @@ public class PadStack {
       //      System.out.println("Args[" + index + "] : " + args[index]);
       String [] args2 = args[index].split(" ");
       //      System.out.println(args[index]);
-      if (args2[0].equals("PadStack")) {
+      if (args2[0].equals("PadStack") && !args2[2].equals("Complex")) {
         identifier = args2[1];
         holeDiam = args2[3];
         surface = args2[5];
@@ -68,11 +68,24 @@ public class PadStack {
         layer = new String [shapeCount];
       } else if (args2[0].equals("PadShape")) {
         shapeType[currentShape] = args2[1];
-        width[currentShape] = Float.parseFloat(args2[3]);
-        height[currentShape] = Float.parseFloat(args2[5]);
+	if (shapeType[currentShape].equals("Polygon")) {
+                width[currentShape] = Float.parseFloat("12");
+                height[currentShape] = Float.parseFloat("12");
+	        layer[currentShape] = "TOP";
+		currentShape++;
+	} else {
+        	width[currentShape] = Float.parseFloat(args2[3]);
+        	height[currentShape] = Float.parseFloat(args2[5]);
         // padType[currentShape] = args2[7]; // not implemented yet
-        layer[currentShape] = args2[9];
-        currentShape++;
+        	layer[currentShape] = args2[9];
+        	currentShape++;
+	} 
+      } else if (args2[0].equals("PadStack") && args2[2].equals("Complex")) {
+        identifier = args2[1];
+        holeDiam = args2[5];
+        surface = args2[13];
+        plated = args2[15];
+        //System.out.println("Plated status: >" + plated + "<"); 
       }
     }
   }
@@ -156,7 +169,7 @@ public class PadStack {
         shapeType[0].equals("SQUARE") ||
         shapeType[0].equals("Square")) {
       kicadShape = 'R';
-    } else if (shapeType[0].equals("Round")) {
+    } else { // (shapeType[0].equals("Round")) { catch the polygon and convert to dummy round
       kicadShape = 'C';
     }
 
