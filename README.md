@@ -27,6 +27,10 @@ To do:
 - option to translate gschem symbol from 0,0 to bottom left of gschem display area 
 - ongoing development work for the component classes is being done mostly in the translate2geda utility, but the improved classes will be put here from time to time
 
+Issues:
+
+- polygonal copper layer pads are identified and replaced with a small circular copper pad on the top layer at the location of the polygonal pad. Polygonal pads seem to be quite rare, having only been encountered occasionally in Eagle and BXL footprint description.
+
 Licence: GPL2
 
 For example vendor BXL files, see:

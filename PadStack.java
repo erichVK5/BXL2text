@@ -81,6 +81,7 @@ public class PadStack {
         	currentShape++;
 	} 
       } else if (args2[0].equals("PadStack") && args2[2].equals("Complex")) {
+	System.out.println("Unsupported polygonal pad in footprint found. Substituting round pad.");
         identifier = args2[1];
         holeDiam = args2[5];
         surface = args2[13];
