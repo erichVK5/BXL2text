@@ -1,6 +1,9 @@
 // KicadSymbolToGEDA - a utility for turning kicad modules to gEDA PCB footprints
-// SymbolPolyline.java v1.0
-// Copyright (C) 2015 Erich S. Heinzle, a1039181@gmail.com
+// SymbolPolyline.java v1.1
+//
+// v1.1 Now with KiCad export for BXL decoded symbols 
+//
+// Copyright (C) 2015, 2016, 2017 Erich S. Heinzle, a1039181@gmail.com
 
 //    see LICENSE-gpl-v2.txt for software license
 //    see README.txt
@@ -131,13 +134,29 @@ public class SymbolPolyline extends SymbolElement
                 + colorIndex + " "
                 + lineThickness + " "
                 + "0 0 "     // for line capstyle (none) and dashstyle (solid)
-                + "-1 -1"); // for dashlength and dashspace (not used) 
+                + "-1 -1\n"); // for dashlength and dashspace (not used) 
       if (index < (vertices - 2)) {
         output = output + "\n";
       }
     }
     return output;
   }
-  
+
+  public String toKicad(long xOffset, long yOffset) {
+    String kicadOutput = "";
+    for (int index = 0; index < (vertices - 1); index++) {
+      kicadOutput = (kicadOutput
+                + "P " + vertices + " 0 1 0 " // part dmg pen
+                + (xCoords[index] + xOffset) + " "
+                + (yCoords[index] + yOffset) + " "
+                + (xCoords[index+1] + xOffset) + " "
+                + (yCoords[index+1] + yOffset) + " "
+                + "N"); // not filled
+      if (index < (vertices - 2)) {
+        kicadOutput = kicadOutput + "\n";
+      }
+    }
+    return kicadOutput;
+  }  
 
 }

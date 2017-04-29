@@ -1,8 +1,10 @@
 // BXLDecoder.java - a utility for converting Huffman encoded files
 // into text, ported to Java from the vala code by Geert Jordaens
 //
-// BXLDecoder.java v1.0
-// Copyright (C) 2016 Erich S. Heinzle, a1039181@gmail.com
+// BXLDecoder.java v1.1
+// Copyright (C) 2016, 2017 Erich S. Heinzle, a1039181@gmail.com
+//
+// v1.1 includes KiCad .lib export for symbols
 
 //    see LICENSE-gpl-v2.txt for software license
 //    see README.txt
@@ -39,17 +41,22 @@ public class BXLDecoder {
       System.exit(0);
     } else {
       filename = args[0];
+      System.out.println("About to use filneame: " + filename);
     }
     
     if (args.length == 2) {
       if (args[1].equals("-t")) {
         textOutputOnly = true;
+        System.out.println("Planning to do text only on: " + filename);
       }
     }
 
     SourceBuffer buffer = new SourceBuffer(filename); 
 
+      System.out.println("Created new buffer: " + filename);
+
     if (textOutputOnly) {
+      System.out.println("About to do text only conversion on: " + filename);
       System.out.println(buffer.decode());
       System.exit(0);
     }
@@ -63,6 +70,13 @@ public class BXLDecoder {
   //private static void parseBXL(Scanner textBXL) {
     String currentLine = "";
     String newElement = "";
+
+    // some variables for kicad eeschema symbol export
+    String kicadHeader = "EESchema-LIBRARY Version 2.3\n#\n# converted by BXL2text https://github.com/erichVK5/BXL2text";
+    String kicadDefs = "";
+    String kicadDrawn = "\nDRAW";
+    String kicadFPList = "\n$FPLIST";
+
     String newSymbol = "";
     String symAttributes = "";
     PadStackList padStacks = new PadStackList();
@@ -125,6 +139,14 @@ public class BXLDecoder {
       } else if (currentLine.startsWith("Symbol ")) {
         String [] tokens = currentLine.split(" ");
         String SymbolName = tokens[1].replaceAll("[\"]","");
+
+        // build a kicad symbol header DEF section here
+	kicadDefs = kicadDefs
+                       + "\n# " + SymbolName + "\n#\n"
+                       + "DEF " + SymbolName + " U 0 40 Y Y 1 F N\n"
+                       + "F0 \"U\" 0 -150 50 H V C CNN\n"
+                       + "F1 \"" + SymbolName + "\" 0 150 50 H V C CNN";
+
         //        PinList pins = new PinList(0); // slots = 0
         pins = new PinList(0); // slots = 0
         while (textBXL.hasNext() &&
@@ -143,11 +165,15 @@ public class BXLDecoder {
             symbolLine.populateBXLElement(currentLine);
             newElement = newElement
                 + "\n" + symbolLine.toString(0,0);
+            kicadDrawn = kicadDrawn
+                + "\n" + symbolLine.toKicad(0,0);
           } else if (currentLine.startsWith("Arc (Layer TOP_SILKSCREEN)")) {
             Arc silkArc = new Arc();
             silkArc.populateBXLElement(currentLine);
             newElement = newElement
                 + silkArc.generateGEDAelement(xOffset,yOffset,1.0f);
+            //kicadDrawn = kicadDrawn    // skip arcs for now. might be broken for gschem .sym
+            //    + silkArc.toKicad(xOffset,yOffset,1.0f);
           } else if (currentLine.startsWith("Attribute")) {
             SymbolText attrText = new SymbolText();
             attrText.populateBXLElement(currentLine);
@@ -189,12 +215,14 @@ public class BXLDecoder {
             String FPAttr = "footprint=" + currentLine;
             symAttributes = symAttributes
                   + SymbolText.BXLAttributeString(0,0, FPAttr);
+            kicadFPList = kicadFPList + "\n " + currentLine;
           } else if (currentLine.startsWith("AlternatePattern")) {
             currentLine = currentLine.replaceAll(" ", "");
             currentLine = currentLine.split("\"")[1];
             String AltFPAttr = "alt-footprint=" + currentLine;
             symAttributes = symAttributes
                   + SymbolText.BXLAttributeString(0,0, AltFPAttr);
+            kicadFPList = kicadFPList + "\n " + currentLine;
           } else if (currentLine.startsWith("CompPin ")) {
             pins.setBXLPinType(currentLine);
           }
@@ -207,6 +235,20 @@ public class BXLDecoder {
                             + symAttributes); // the final attributes
           symOutput.close();
           System.out.println(symbolName + ".sym");
+
+          // KiCad symbol export
+          String kicad = kicadHeader
+                            + kicadDefs
+                            + kicadFPList + "\n$ENDFPLIST" // name says it all
+                            + kicadDrawn  // drawn elements here
+                            + pins.toKicad(0,0) // we now add pins
+                            + "\nENDDRAW\nENDDEF";
+          File newKicad = new File(symbolName + ".lib");
+          symOutput = new PrintWriter(newKicad);
+          symOutput.println(kicad);
+          symOutput.close();
+          System.out.println(symbolName + ".lib");
+
         } catch(Exception e) {
           System.out.println("There was an error saving: "
                              + symbolName + ".sym"); 

@@ -1,5 +1,9 @@
 // KicadSymbolToGEDA - a utility for turning kicad modules to gEDA PCB footprints
-// SymbolPin.java v1.1
+// SymbolPin.java v1.2
+//
+// v1.2 Now with KiCad export for BXL decoded symbols 
+//
+
 // Copyright (C) 2015 Erich S. Heinzle, a1039181@gmail.com
 
 //    see LICENSE-gpl-v2.txt for software license
@@ -601,6 +605,48 @@ public class SymbolPin extends SymbolElement
             + "\n"
             + attributeFieldPinType(pinEType, pinNumberX + xOffset, pinNumberY + yOffset, pinNumberOrientation, pinNumberAlignment)
             + "\n}");
+  }
+
+  public String toKicad(long xOffset, long yOffset) {
+
+    long length = (long)Math.sqrt((xCoord1 - xCoord2)*(xCoord1 - xCoord2) + (yCoord1 - yCoord2)*(yCoord1 - yCoord2));
+    long kicadX = xCoord1;
+    long kicadY = yCoord1;
+    if (activeEnd != 1) {
+        kicadX = xCoord2;
+        kicadY = yCoord2;
+    }
+    String direction = "L";
+    if (xCoord1 == xCoord2 && yCoord1 > yCoord2) {
+        direction = "U";
+	if (activeEnd == 1) {
+		direction = "D";
+	} 
+    } else if (xCoord1 == xCoord2 && yCoord1 < yCoord2) {
+        direction = "D";
+        if (activeEnd == 1) {
+                direction = "U";
+        }
+    } else if (xCoord1 > xCoord2 && yCoord1 == yCoord2) {
+        direction = "R";
+        if (activeEnd == 1) {
+                direction = "L";
+        }
+    } else if (xCoord1 < xCoord2 && yCoord1 == yCoord2) {
+        direction = "L";
+        if (activeEnd == 1) {
+                direction = "R";
+        }
+    }
+    return ("X "
+            + pinName + " "
+            + pinNumber + " "
+            + (kicadX + xOffset) + " "
+            + (kicadY + yOffset) + " "
+            + length + " "
+            + direction + " "
+            + "50 50 1 1 P");
+            //+ attributeFieldPinType(pinEType, pinNumberX + xOffset, pinNumberY + yOffset, pinNumberOrientation, pinNumberAlignment)
   }
 
   public int slot() {

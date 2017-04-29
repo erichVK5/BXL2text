@@ -1,6 +1,10 @@
 // KicadSymbolToGEDA - a utility for turning kicad modules to gEDA PCB footprints
-// PinList.java v1.1
-// Copyright (C) 2015 Erich S. Heinzle, a1039181@gmail.com
+// PinList.java v1.2
+//
+// v1.1 Now with KiCad export for BXL decoded symbols 
+//
+
+// Copyright (C) 2015, 2016, 2017 Erich S. Heinzle, a1039181@gmail.com
 
 //    see LICENSE-gpl-v2.txt for software license
 //    see README.txt
@@ -553,6 +557,15 @@ public class PinList {
     // we offset text attributes to the RHS by default
     // this should not cause issues with schematic conversions
     output = output + slotSummaryRHS(xOffset, yOffset);
+    return output;
+  }
+
+  public String toKicad(long xOffset, long yOffset) {
+    String output = "";
+    SymbolPin.resetPinSeqTally();
+    for (int index = 0; index < pinCounts[0]; index++) {
+      output = output + "\n" + slotArrays[0][index].toKicad(xOffset, yOffset);
+    }
     return output;
   }
 

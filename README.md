@@ -1,5 +1,5 @@
 # BXL2text
-A utility to convert huffman encoded BXL schematic and footprint files to plain text, and undertake further conversion to FOSS EDA compatible formats, which for now is gEDA, but Kicad support is planned.
+A utility to convert huffman encoded BXL schematic and footprint files to plain text, and undertake further conversion to FOSS EDA compatible formats, which for now is gEDA and Kicad -> preliminary Kicad support has been implemented, with automatic export of eeschmea (.lib) symbols along with gschem (.sym) symbols. Kicad natively supports gEDA PCB .fp footprints, so pcbnew footprint export has not been implemented.
 
 BXL files are a vendor neutral and EDA package neutral file format used by device vendors to distribute schematic symbols and footprints for use in EDA tools such as, but not limited to, gEDA, for PCB and circuit design.
 
@@ -23,7 +23,7 @@ This code is now included in the translate2geda utility, which can also convert 
 
 To do:
 
-- kicad format export
+- add the kicad symbol format export to the translate2geda utility
 - option to translate gschem symbol from 0,0 to bottom left of gschem display area 
 - ongoing development work for the component classes is being done mostly in the translate2geda utility, but the improved classes will be put here from time to time
 
