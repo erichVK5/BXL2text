@@ -610,32 +610,32 @@ public class SymbolPin extends SymbolElement
   public String toKicad(long xOffset, long yOffset) {
 
     long length = (long)Math.sqrt((xCoord1 - xCoord2)*(xCoord1 - xCoord2) + (yCoord1 - yCoord2)*(yCoord1 - yCoord2));
-    long kicadX = xCoord1;
-    long kicadY = yCoord1;
+    long kicadX = xCoord2;
+    long kicadY = yCoord2;
     if (activeEnd != 1) {
-        kicadX = xCoord2;
-        kicadY = yCoord2;
+        kicadX = xCoord1;
+        kicadY = yCoord1;
     }
     String direction = "L";
     if (xCoord1 == xCoord2 && yCoord1 > yCoord2) {
-        direction = "U";
+        direction = "D";
 	if (activeEnd == 1) {
-		direction = "D";
+		direction = "U";
 	} 
     } else if (xCoord1 == xCoord2 && yCoord1 < yCoord2) {
-        direction = "D";
+        direction = "U";
         if (activeEnd == 1) {
-                direction = "U";
+                direction = "D";
         }
     } else if (xCoord1 > xCoord2 && yCoord1 == yCoord2) {
-        direction = "R";
-        if (activeEnd == 1) {
-                direction = "L";
-        }
-    } else if (xCoord1 < xCoord2 && yCoord1 == yCoord2) {
         direction = "L";
         if (activeEnd == 1) {
                 direction = "R";
+        }
+    } else if (xCoord1 < xCoord2 && yCoord1 == yCoord2) {
+        direction = "R";
+        if (activeEnd == 1) {
+                direction = "L";
         }
     }
     return ("X "
