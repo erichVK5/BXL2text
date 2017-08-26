@@ -134,7 +134,7 @@ public class SymbolPolyline extends SymbolElement
                 + colorIndex + " "
                 + lineThickness + " "
                 + "0 0 "     // for line capstyle (none) and dashstyle (solid)
-                + "-1 -1\n"); // for dashlength and dashspace (not used) 
+                + "-1 -1"); // for dashlength and dashspace (not used) 
       if (index < (vertices - 2)) {
         output = output + "\n";
       }
