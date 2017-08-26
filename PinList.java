@@ -379,7 +379,7 @@ public class PinList {
     //System.out.println("PinDesc:" + pinDesc); 
     pinDesc = pinDesc.replaceAll("\"", "");
     pinDesc = pinDesc.replaceAll(" ", "");
-    int BXLPinNum = Integer.parseInt(pinDesc);
+    int BXLPinNum = Integer.parseInt(pinDesc.replaceAll("\\D+",""));
     //System.out.println("Pin num:" + BXLPinNum);
     indexOne = BXLCompPinDef.indexOf("(PinType");
     indexTwo = BXLCompPinDef.indexOf(")", indexOne);

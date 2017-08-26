@@ -67,15 +67,15 @@ public class SymbolPolyline extends SymbolElement
     String [] tokens = BXLLine.split(" ");
     for (int index = 0; index < tokens.length; index++) {
       if (tokens[index].equals("Origin")) {
-        xCoords[0] = Integer.parseInt(tokens[++index]);
-        yCoords[0] = Integer.parseInt(tokens[++index]);
+        xCoords[0] = Math.round(Float.parseFloat(tokens[++index]));
+        yCoords[0] = Math.round(Float.parseFloat(tokens[++index]));
         updateCoords(0);
       } else if (tokens[index].equals("EndPoint")) {
-        xCoords[1] = Integer.parseInt(tokens[++index]);
-        yCoords[1] = Integer.parseInt(tokens[++index]);
+        xCoords[1] = Math.round(Float.parseFloat(tokens[++index]));
+        yCoords[1] = Math.round(Float.parseFloat(tokens[++index]));
         updateCoords(1);
       } else if (tokens[index].equals("Width")) {
-        lineThickness = Integer.parseInt(tokens[++index]);
+        lineThickness = Math.round(Float.parseFloat(tokens[++index]));
       }
     }
     vertices = 2;
