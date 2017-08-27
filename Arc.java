@@ -91,9 +91,9 @@ public class Arc extends FootprintElementArchetype
       } else if(tokens[index].equals("Width")) {
         lineThicknessNm = milToNM(Float.parseFloat(tokens[++index]));
       } else if(tokens[index].equals("StartAngle")) { // in degrees
-        gEDAstartAngle = Integer.parseInt(tokens[++index]);
+        gEDAstartAngle = Math.round(Float.parseFloat(tokens[++index]));
       } else if(tokens[index].equals("SweepAngle")) { // in degrees
-        gEDAdeltaAngle = -Integer.parseInt(tokens[++index]);
+        gEDAdeltaAngle = -Math.round(Float.parseFloat(tokens[++index]));
         // seem to need negative here, since y-axis is flipped
       }
     }
