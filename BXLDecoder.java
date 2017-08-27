@@ -41,7 +41,7 @@ public class BXLDecoder {
       System.exit(0);
     } else {
       filename = args[0];
-      System.out.println("About to use filneame: " + filename);
+      System.out.println("About to use filename: " + filename);
     }
     
     if (args.length == 2) {
@@ -71,16 +71,23 @@ public class BXLDecoder {
     String currentLine = "";
     String newElement = "";
 
+    String SymbolName[] = new String[20];
+    String SymbolDefs[] = new String[20];
+
     // some variables for kicad eeschema symbol export
     String kicadHeader = "EESchema-LIBRARY Version 2.3\n#\n# converted by BXL2text https://github.com/erichVK5/BXL2text";
-    String kicadDefs = "";
-    String kicadDrawn = "\nDRAW";
-    String kicadFPList = "\n$FPLIST";
+    //String kicadDefs = "";
+    //String kicadDrawn = "\nDRAW";
+    //String kicadFPList = "\n$FPLIST";
+    String kicadDefs[] = new String[20];
+    String kicadDrawn[] = new String[20];
+    String kicadFPList[] = new String[20];
+    int dfIndex = -1;
 
     String newSymbol = "";
     String symAttributes = "";
     PadStackList padStacks = new PadStackList();
-    PinList pins = new PinList(0); // slots = 0
+    PinList pins[] = new PinList[20]; // slots = 0
 
     long xOffset = 0;
     long yOffset = 0;
@@ -138,17 +145,24 @@ public class BXLDecoder {
         newElement = ""; // reset the variable
       } else if (currentLine.startsWith("Symbol ")) {
         String [] tokens = currentLine.split(" ");
-        String SymbolName = tokens[1].replaceAll("[\"]","");
+	dfIndex++;
+
+        SymbolName[dfIndex] = tokens[1].replaceAll("[\"]","");
 
         // build a kicad symbol header DEF section here
-	kicadDefs = kicadDefs
-                       + "\n# " + SymbolName + "\n#\n"
-                       + "DEF " + SymbolName + " U 0 40 Y Y 1 F N\n"
+	kicadDefs[dfIndex] = 
+                         "\n# " + SymbolName[dfIndex] + "\n#\n"
+                       + "DEF " + SymbolName[dfIndex] + " U 0 40 Y Y 1 F N\n"
                        + "F0 \"U\" 0 -150 50 H V C CNN\n"
-                       + "F1 \"" + SymbolName + "\" 0 150 50 H V C CNN";
+                       + "F1 \"" + SymbolName[dfIndex] + "\" 0 150 50 H V C CNN";
 
         //        PinList pins = new PinList(0); // slots = 0
-        pins = new PinList(0); // slots = 0
+        // pins = new PinList(0); // slots = 0
+
+        kicadDrawn[dfIndex] = "\nDRAW";
+        kicadFPList[dfIndex] = "\n$FPLIST";
+        pins[dfIndex] = new PinList(0); // slots = 0
+
         while (textBXL.hasNext() &&
                !currentLine.startsWith("EndSymbol")) {
           currentLine = textBXL.nextLine().trim();
@@ -159,18 +173,18 @@ public class BXLDecoder {
                 textBXL.nextLine().trim() + " " +
                 textBXL.nextLine().trim(); // we combine the 3 lines
             latestPin.populateBXLElement(currentLine);
-            pins.addPin(latestPin);
+            pins[dfIndex].addPin(latestPin);
           } else if (currentLine.startsWith("Line")) {
             SymbolPolyline symbolLine = new SymbolPolyline();
             symbolLine.populateBXLElement(currentLine);
-            newElement = newElement
+            SymbolDefs[dfIndex] = SymbolDefs[dfIndex]
                 + "\n" + symbolLine.toString(0,0);
-            kicadDrawn = kicadDrawn
+            kicadDrawn[dfIndex] = kicadDrawn[dfIndex]
                 + "\n" + symbolLine.toKicad(0,0);
           } else if (currentLine.startsWith("Arc (Layer TOP_SILKSCREEN)")) {
             Arc silkArc = new Arc();
             silkArc.populateBXLElement(currentLine);
-            newElement = newElement
+            SymbolDefs[dfIndex] = SymbolDefs[dfIndex]
                 + silkArc.generateGEDAelement(xOffset,yOffset,1.0f);
             //kicadDrawn = kicadDrawn    // skip arcs for now. might be broken for gschem .sym
             //    + silkArc.toKicad(xOffset,yOffset,1.0f);
@@ -189,9 +203,9 @@ public class BXLDecoder {
 
           }
         }
-        newSymbol = "v 20110115 1"
-            + newElement; // we have created the header for the symbol
-        newElement = "";
+        SymbolDefs[dfIndex] = "v 20110115 1"
+            + SymbolDefs[dfIndex]; // we have created the header for the symbol
+        newElement = ""; // probably not needed
       } else if (currentLine.startsWith("Component ")) {
         String [] tokens = currentLine.split(" ");
         String symbolName = tokens[1].replaceAll("[\"]","");
@@ -215,36 +229,59 @@ public class BXLDecoder {
             String FPAttr = "footprint=" + currentLine;
             symAttributes = symAttributes
                   + SymbolText.BXLAttributeString(0,0, FPAttr);
-            kicadFPList = kicadFPList + "\n " + currentLine;
+            kicadFPList[dfIndex] = kicadFPList[dfIndex] + "\n " + currentLine;
           } else if (currentLine.startsWith("AlternatePattern")) {
             currentLine = currentLine.replaceAll(" ", "");
             currentLine = currentLine.split("\"")[1];
             String AltFPAttr = "alt-footprint=" + currentLine;
             symAttributes = symAttributes
                   + SymbolText.BXLAttributeString(0,0, AltFPAttr);
-            kicadFPList = kicadFPList + "\n " + currentLine;
+            kicadFPList[dfIndex] = kicadFPList[dfIndex] + "\n " + currentLine;
           } else if (currentLine.startsWith("CompPin ")) {
-            pins.setBXLPinType(currentLine);
+            pins[dfIndex].setBXLPinType(currentLine);
           }
         }
         try {
-          File newSym = new File(symbolName + ".sym");
-          PrintWriter symOutput = new PrintWriter(newSym);
-          symOutput.println(newSymbol   // we now add pins to the
-                            + pins.toString(0,0) // the header, and then
+//          File newSym = new File(symbolName + ".sym");
+//          PrintWriter symOutput = new PrintWriter(newSym);
+//          symOutput.println(newSymbol   // we now add pins to the
+//                            + pins.toString(0,0) // the header, and then
+//                            + symAttributes); // the final attributes
+
+          for (int i=0; i < kicadDefs.length; i++) {
+          if (kicadDefs[i] == null) break;
+              File newSym = new File(SymbolName[i] + ".sym");
+              PrintWriter symOutput = new PrintWriter(newSym);
+              symOutput.println(SymbolDefs[i] // we now add pins to the
+                            + pins[i].toString(0,0) // the header, and then
                             + symAttributes); // the final attributes
-          symOutput.close();
-          System.out.println(symbolName + ".sym");
+              symOutput.close();
+              System.out.println(SymbolName[i] + ".sym");
+          }
+
+//          symOutput.close();
+//          System.out.println(symbolName + ".sym");
 
           // KiCad symbol export
-          String kicad = kicadHeader
-                            + kicadDefs
-                            + kicadFPList + "\n$ENDFPLIST" // name says it all
-                            + kicadDrawn  // drawn elements here
-                            + pins.toKicad(0,0) // we now add pins
+//          String kicad = kicadHeader
+//                            + kicadDefs
+//                            + kicadFPList + "\n$ENDFPLIST" // name says it all
+//                            + kicadDrawn  // drawn elements here
+//                            + pins.toKicad(0,0) // we now add pins
+//                            + "\nENDDRAW\nENDDEF";
+
+          String kicad = kicadHeader;
+          for (int i=0; i < kicadDefs.length; i++) {
+          if (kicadDefs[i] == null) break;
+              kicad += kicadDefs[i]
+                            + kicadFPList[i] + "\n$ENDFPLIST" // name says it all
+                            + kicadDrawn[i]  // drawn elements here
+                            + pins[i].toKicad(0,0) // we now add pins
                             + "\nENDDRAW\nENDDEF";
+          }
+
           File newKicad = new File(symbolName + ".lib");
-          symOutput = new PrintWriter(newKicad);
+          PrintWriter symOutput = new PrintWriter(newKicad);
           symOutput.println(kicad);
           symOutput.close();
           System.out.println(symbolName + ".lib");
