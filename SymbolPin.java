@@ -26,6 +26,7 @@
 //    KicadSymbolToGEDA Copyright (C) 2015 Erich S. Heinzle a1039181@gmail.com
 
 import java.lang.Exception;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -83,7 +84,7 @@ public class SymbolPin extends SymbolElement
   int activeEnd = 0; // 1 = first end, 0 = second end
   int kicadUnit = 0; // equivalent to gschem "slot"
 
-  String kicadEType = ""; // kicad equivalent to gschem pintype=
+  String kicadEType = "P"; // kicad equivalent to gschem pintype=
   String pinEType = "pas"; //default setting
 
   // the following variables define the visual appearance of the
@@ -610,12 +611,14 @@ public class SymbolPin extends SymbolElement
   public String toKicad(long xOffset, long yOffset) {
 
     long length = (long)Math.sqrt((xCoord1 - xCoord2)*(xCoord1 - xCoord2) + (yCoord1 - yCoord2)*(yCoord1 - yCoord2));
+
     long kicadX = xCoord2;
     long kicadY = yCoord2;
     if (activeEnd != 1) {
         kicadX = xCoord1;
         kicadY = yCoord1;
     }
+
     String direction = "L";
     if (xCoord1 == xCoord2 && yCoord1 > yCoord2) {
         direction = "D";
@@ -638,15 +641,24 @@ public class SymbolPin extends SymbolElement
                 direction = "L";
         }
     }
+
+    // In KiCAD, pin number is not neccessarily a number; it can also store BGA pin coords, A1-ZZ99
+    String bestNumber = pinNumber;
+    if (Pattern.matches("^[A-Za-z]{1,2}[0-9]{1,3}$", pinDesc))
+        bestNumber = pinDesc;
+
     return ("X "
-            + pinName + " "
-            + pinNumber + " "
-            + (kicadX + xOffset) + " "
-            + (kicadY + yOffset) + " "
-            + length + " "
-            + direction + " "
-            + "50 50 1 1 P");
-            //+ attributeFieldPinType(pinEType, pinNumberX + xOffset, pinNumberY + yOffset, pinNumberOrientation, pinNumberAlignment)
+            + pinName + " " //  name displayed on the pin
+            + bestNumber + " " // pin no. displayed on the pin, may be in col+row form
+            + (kicadX + xOffset) + " " // Position X same units as the length
+            + (kicadY + yOffset) + " " // Position Y same units as the length
+            + length + " " // length of pin
+            + direction + " " // R for Right, L for left, U for Up, D for Down
+            + (50) + " " + (50) + " " // Text sizes for the pin name and pin number
+            + kicadUnit + " " // unit no. in case of multiple units
+            + (0) + " " //  In case of variations in shape for units, each variation has a number. 0 indicates no variations. For example, an inverter may have two variations - one with the bubble on the input and one on the output.
+            + kicadEType.charAt(0) // Elec. Type of pin (I=Input, O=Output, B=Bidi, T=tristate,P=Passive, U=Unspecified, W=Power In, w=Power Out, C=Open Collector, E=Open Emitter, N=Not Connected)
+            ); // end - because Graphic Style of pin is optional
   }
 
   public int slot() {
