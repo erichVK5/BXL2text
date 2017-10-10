@@ -610,7 +610,7 @@ public class PinList {
   }
   
   public long minX() { // this returns pin minX
-    minX = slotArrays[0][0].localMinXCoord();
+    minX = Long.MAX_VALUE;
     for (int index = 0; index < numSlots; index++) {
       for (int pin = 0 ; pin < pinCounts[index]; pin ++) {
         if (minX > slotArrays[index][pin].localMinXCoord()) {
@@ -622,7 +622,7 @@ public class PinList {
   }
 
   public long minY() { // this returns pin minY
-    minY = slotArrays[0][0].localMinYCoord();
+    minY = Long.MAX_VALUE;
     for (int index = 0; index < numSlots; index++) {
       for (int pin = 0 ; pin < pinCounts[index]; pin ++) {
         if (minY > slotArrays[index][pin].localMinYCoord()) {
@@ -634,7 +634,7 @@ public class PinList {
   }
 
   public long maxX() { // this returns pin maxX
-   maxX = slotArrays[0][0].localMaxXCoord();
+    maxX = Long.MIN_VALUE;
     for (int index = 0; index < numSlots; index++) {
       for (int pin = 0 ; pin < pinCounts[index]; pin ++) {
         if (maxX < slotArrays[index][pin].localMaxXCoord()) {
@@ -643,10 +643,10 @@ public class PinList {
       }
     }
     return maxX;
-  } 
+  }
 
   public long maxY() { // this returns pin maxY
-   maxY = slotArrays[0][0].localMaxYCoord();
+    maxY = Long.MIN_VALUE;
     for (int index = 0; index < numSlots; index++) {
       for (int pin = 0 ; pin < pinCounts[index]; pin ++) {
         if (maxY < slotArrays[index][pin].localMaxYCoord()) {
