@@ -82,7 +82,6 @@ public class SymbolPin extends SymbolElement
   String pinDirection = "0"; // default non-sensical value
   int pinType = 0; // 0 = normal, and 1 = bus/unused
   int activeEnd = 0; // 1 = first end, 0 = second end
-  int kicadUnit = 0; // equivalent to gschem "slot"
 
   String kicadEType = "P"; // kicad equivalent to gschem pintype=
   String pinEType = "pas"; //default setting
@@ -132,7 +131,7 @@ public class SymbolPin extends SymbolElement
     copyOf.pinLength = this.pinLength;
     copyOf.pinDirection = this.pinDirection;
     copyOf.pinEType = this.pinEType;
-    copyOf.kicadUnit = this.kicadUnit;
+    copyOf.slot = this.slot;
     copyOf.organiseLabelAndPinCoords();
     return copyOf;
   }
@@ -170,7 +169,7 @@ public class SymbolPin extends SymbolElement
     super.updateYdimensions(yCoord1);
     organiseLabelAndPinCoords();
 
-    kicadUnit = 0; // assume only one slot
+    slot = 0; // assume only one slot
     pinEType = "pas"; // default for now, may be able to fix
     // by parsing the pin description in the IBIS file. Meh.
 
@@ -202,7 +201,7 @@ public class SymbolPin extends SymbolElement
     super.updateYdimensions(yCoord1);
     organiseLabelAndPinCoords();
 
-    kicadUnit = 0; // assume only one slot
+    slot = 0; // assume only one slot
     pinEType = "pas"; // default for now, may be able to fix...
 
   }
@@ -224,7 +223,7 @@ public class SymbolPin extends SymbolElement
     super.updateYdimensions(yCoord1);
     organiseLabelAndPinCoords();
 
-    kicadUnit = 0; // assume only one slot
+    slot = 0; // assume only one slot
     pinEType = "pas"; // default for now, may be able to fix...
 
   }
@@ -337,7 +336,7 @@ public class SymbolPin extends SymbolElement
     super.updateYdimensions(yCoord1);
     organiseLabelAndPinCoords();
 
-    kicadUnit = 0; // assume only one slot
+    slot = 0; // assume only one slot
     pinEType = EagleEType; // Eagle used pretty much the same notation
     // except for "nc" = not connected
   }
@@ -385,7 +384,7 @@ public class SymbolPin extends SymbolElement
     super.updateYdimensions(yCoord1);
     organiseLabelAndPinCoords();
 
-    kicadUnit = 0; // assume only one slot
+    slot = 0; // assume only one slot
     pinEType = "pas"; // default for now, may be able to fix
 
   }
@@ -409,8 +408,8 @@ public class SymbolPin extends SymbolElement
 
     organiseLabelAndPinCoords();
 
-    // the kicadUnit is equivalent to the slot in gschem... useful
-    kicadUnit = Integer.parseInt(tokens[9]);
+    // the kicad Unit is equivalent to the slot in gschem... useful
+    slot = Integer.parseInt(tokens[9]);
 
     kicadEType = tokens[11]; // the electrical type of the pin
     setPinType(kicadEType); // now set it
@@ -655,14 +654,10 @@ public class SymbolPin extends SymbolElement
             + length + " " // length of pin
             + direction + " " // R for Right, L for left, U for Up, D for Down
             + (50) + " " + (50) + " " // Text sizes for the pin name and pin number
-            + kicadUnit + " " // unit no. in case of multiple units
+            + slot + " " // unit no. in case of multiple units
             + (0) + " " //  In case of variations in shape for units, each variation has a number. 0 indicates no variations. For example, an inverter may have two variations - one with the bubble on the input and one on the output.
             + kicadEType.charAt(0) // Elec. Type of pin (I=Input, O=Output, B=Bidi, T=tristate,P=Passive, U=Unspecified, W=Power In, w=Power Out, C=Open Collector, E=Open Emitter, N=Not Connected)
             ); // end - because Graphic Style of pin is optional
-  }
-
-  public int slot() {
-    return kicadUnit; // kicadUnit is equivalent to slot in gschem
   }
 
   public char pinDirection() {

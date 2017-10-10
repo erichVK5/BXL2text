@@ -173,10 +173,12 @@ public class BXLDecoder {
                 textBXL.nextLine().trim() + " " +
                 textBXL.nextLine().trim(); // we combine the 3 lines
             latestPin.populateBXLElement(currentLine);
+            latestPin.setSlot(dfIndex);
             pins[dfIndex].addPin(latestPin);
           } else if (currentLine.startsWith("Line")) {
             SymbolPolyline symbolLine = new SymbolPolyline();
             symbolLine.populateBXLElement(currentLine);
+            symbolLine.setSlot(dfIndex);
             SymbolDefs[dfIndex] = SymbolDefs[dfIndex]
                 + "\n" + symbolLine.toString(0,0);
             kicadDrawn[dfIndex] = kicadDrawn[dfIndex]
