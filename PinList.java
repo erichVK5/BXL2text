@@ -542,52 +542,72 @@ public class PinList {
     //System.out.println("Generated new bounding box");
   }
 
-  public String toString(long xOffset, long yOffset) {
+  public String toString(int slotSel, long xOffset, long yOffset) {
     String output = "";
     SymbolPin.resetPinSeqTally();
+    // Content of slot 0 is included in all slots
     for (int index = 0; index < pinCounts[0]; index++) {
       output = output + "\n" + slotArrays[0][index].toString(xOffset, yOffset);
     }
-    if (pinCounts.length > 1) { // length == 1 for bxl files
-      for (int index = 0; index < pinCounts[1]; index++) {
-        // by default, for a multislot device, we only display slot 1
-        output = output + "\n" + slotArrays[1][index].toString(xOffset, yOffset); 
+    if (slotSel > 0 && slotSel < pinCounts.length) { // if we have the requested slot
+      for (int index = 0; index < pinCounts[slotSel]; index++) {
+        output = output + "\n" + slotArrays[slotSel][index].toString(xOffset, yOffset);
       }
     }
     // we offset text attributes to the RHS by default
     // this should not cause issues with schematic conversions
-    output = output + slotSummaryRHS(xOffset, yOffset);
+    output = output + slotSummaryRHS(slotSel, xOffset, yOffset);
     return output;
   }
 
   public String toKicad(long xOffset, long yOffset) {
     String output = "";
-    SymbolPin.resetPinSeqTally();
-    for (int index = 0; index < pinCounts[0]; index++) {
-      output = output + "\n" + slotArrays[0][index].toKicad(xOffset, yOffset);
+    for (int slotSel = 0; slotSel < pinCounts.length; slotSel++) {
+        output += toKicad(slotSel, xOffset, yOffset);
     }
     return output;
   }
 
-  public String slotSummary(long xOffset, long yOffset) {
-    return slotSummary(xOffset, yOffset, 0); // no RHS offset
+  public String toKicad(int slotSel, long xOffset, long yOffset) {
+    String output = "";
+    if (slotSel == 0)
+        SymbolPin.resetPinSeqTally();
+    if (pinCounts.length > slotSel) { // if we have the requested slot
+      for (int index = 0; index < pinCounts[slotSel]; index++) {
+        output = output + "\n" + slotArrays[slotSel][index].toKicad(xOffset, yOffset);
+      }
+    }
+    return output;
   }
 
-  public String slotSummaryRHS(long xOffset, long yOffset) {
-    return slotSummary(xOffset, yOffset, textRHS()); // offset to RHS
+  public int usedSlots() {
+    for (int slotSel = pinCounts.length-1; slotSel > 0; slotSel--) {
+        if (pinCounts[slotSel] > 0)
+            return slotSel+1;
+    }
+    return 1;
   }
 
-  private String slotSummary(long xOffset, long yOffset, long ROffset) {
+  public String slotSummary(int slotSel, long xOffset, long yOffset) {
+    return slotSummary(slotSel, xOffset, yOffset, 0); // no RHS offset
+  }
+
+  public String slotSummaryRHS(int slotSel, long xOffset, long yOffset) {
+    return slotSummary(slotSel, xOffset, yOffset, textRHS()); // offset to RHS
+  }
+
+  private String slotSummary(int slotSel, long xOffset, long yOffset, long ROffset) {
     String summary = "";
-    if (numSlots < 3) {
+    int nslots = usedSlots();
+    if (nslots < 3) {
       summary = SymbolText.attributeString(ROffset + xOffset, yOffset, "numslots=0");
     } else { // this is a multi-slot device
       // we summarise the number of slots
-      summary = SymbolText.attributeString(ROffset + xOffset, yOffset, "numslots=" + (numSlots - 1));
+      summary = SymbolText.attributeString(ROffset + xOffset, yOffset, "numslots=" + (nslots - 1));
       // we explain which slot is implemented in the symbol
-      summary = summary + SymbolText.attributeString(ROffset + xOffset, yOffset, "slot=1");
+      summary = summary + SymbolText.attributeString(ROffset + xOffset, yOffset, "slot=" + (slotSel));
       // then we generate some slotdefs
-      for (int index = 1; index < numSlots; index++) {
+      for (int index = 1; index < nslots; index++) {
         summary = summary + SymbolText.attributeString(ROffset + xOffset, yOffset, "slotdef=" + index + ":");
         for (int pin = 0 ; pin < pinCounts[index]; pin ++) {
           summary = summary + slotArrays[index][pin].pinNumber;

@@ -255,7 +255,7 @@ public class BXLDecoder {
               File newSym = new File(SymbolName[i] + ".sym");
               PrintWriter symOutput = new PrintWriter(newSym);
               symOutput.println(SymbolDefs[i] // we now add pins to the
-                            + pins[i].toString(0,0) // the header, and then
+                            + pins[i].toString(i,0,0) // the header, and then
                             + symAttributes); // the final attributes
               symOutput.close();
               System.out.println(SymbolName[i] + ".sym");
@@ -278,7 +278,7 @@ public class BXLDecoder {
               kicad += kicadDefs[i]
                             + kicadFPList[i] + "\n$ENDFPLIST" // name says it all
                             + kicadDrawn[i]  // drawn elements here
-                            + pins[i].toKicad(0,0) // we now add pins
+                            + pins[i].toKicad(i,0,0) // we now add pins
                             + "\nENDDRAW\nENDDEF";
           }
 
