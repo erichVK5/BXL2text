@@ -38,7 +38,6 @@ public class PinList {
   SymbolPin[][] slotArrays;
   int[] pinCounts;
   int numSlots = 1;
-  int kicadSlots = 0;
   int pinsPerSlot = 10; //default value, but resizes automatically if needed
   int totalPinCount = 0;
   int maxPinNumber = 0;
@@ -64,7 +63,7 @@ public class PinList {
   }
 
   public PinList(int slotCount) {
-    kicadSlots = slotCount;
+    // We will store common symbols in slot[0], so we need one more
     numSlots = slotCount + 1;
     //    System.out.println("New pinlist created with " + numSlots + " slots");
     slotArrays = new SymbolPin[numSlots][pinsPerSlot];
@@ -299,7 +298,7 @@ public class PinList {
       }
     }
 
-    PinList gridAlignedPins = new PinList(kicadSlots);
+    PinList gridAlignedPins = new PinList(numSlots-1);
     //    gridAlignedPins.resetXYExtents();
         // now need to recalculate bounds while
         // adding transmogrified pins to new pin list
@@ -580,11 +579,11 @@ public class PinList {
 
   private String slotSummary(long xOffset, long yOffset, long ROffset) {
     String summary = "";
-    if (kicadSlots < 2) {
+    if (numSlots < 3) {
       summary = SymbolText.attributeString(ROffset + xOffset, yOffset, "numslots=0");
     } else { // this is a multi-slot device
       // we summarise the number of slots
-      summary = SymbolText.attributeString(ROffset + xOffset, yOffset, "numslots=" + kicadSlots);
+      summary = SymbolText.attributeString(ROffset + xOffset, yOffset, "numslots=" + (numSlots - 1));
       // we explain which slot is implemented in the symbol
       summary = summary + SymbolText.attributeString(ROffset + xOffset, yOffset, "slot=1");
       // then we generate some slotdefs
@@ -592,7 +591,7 @@ public class PinList {
         summary = summary + SymbolText.attributeString(ROffset + xOffset, yOffset, "slotdef=" + index + ":");
         for (int pin = 0 ; pin < pinCounts[index]; pin ++) {
           summary = summary + slotArrays[index][pin].pinNumber;
-          if (pin < (pinCounts[index] -1)) {
+          if (pin < (pinCounts[index] - 1)) {
             summary = summary + ",";
           }
         }
