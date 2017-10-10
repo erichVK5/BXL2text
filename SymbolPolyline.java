@@ -48,6 +48,8 @@ public class SymbolPolyline extends SymbolElement
 
   String polylineDescriptor = "";  
   String output = "";
+
+  boolean separateLines = false;
   
   int vertices = 0;
   long xCoords[] = new long[30];
@@ -143,10 +145,24 @@ public class SymbolPolyline extends SymbolElement
   }
 
   public String toKicad(long xOffset, long yOffset) {
+    if (separateLines)
+         return toKicadLines(xOffset, yOffset);
+    else
+         return toKicadPolys(xOffset, yOffset);
+  }
+
+  /** Prepare a string with mulyiple separate lines made of the polygon data
+   * in KiCAD format.
+   */
+  public String toKicadLines(long xOffset, long yOffset) {
     String kicadOutput = "";
     for (int index = 0; index < (vertices - 1); index++) {
       kicadOutput = (kicadOutput
-                + "P " + vertices + " 0 1 0 " // part dmg pen
+                + "P "
+                + vertices + " "
+                + slot + " " // part/unit
+                + 1 + " " // dmg/convert
+                + 0 + " " // pen/thickness
                 + (xCoords[index] + xOffset) + " "
                 + (yCoords[index] + yOffset) + " "
                 + (xCoords[index+1] + xOffset) + " "
@@ -157,6 +173,29 @@ public class SymbolPolyline extends SymbolElement
       }
     }
     return kicadOutput;
-  }  
+  }
+
+  /** Prepare a string with polygon data in KiCAD format.
+   */
+  public String toKicadPolys(long xOffset, long yOffset) {
+    String kicadOutput = "";
+    // P point_count unit convert thickness (posx posy)* fill
+    kicadOutput = (kicadOutput
+                + "P "
+                + vertices + " "
+                + slot + " " // part/unit
+                + 1 + " " // dmg/convert
+                + 0 + " " // pen/thickness
+                );
+    for (int index = 0; index < vertices; index++) {
+      kicadOutput = (kicadOutput
+                  + (xCoords[index] + xOffset) + " "
+                  + (yCoords[index] + yOffset) + " "
+                  );
+    }
+    kicadOutput = (kicadOutput
+                + "N"); // not filled
+    return kicadOutput;
+  }
 
 }
