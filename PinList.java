@@ -38,7 +38,6 @@ public class PinList {
   SymbolPin[][] slotArrays;
   int[] pinCounts;
   int numSlots = 1;
-  int kicadSlots = 0;
   int pinsPerSlot = 10; //default value, but resizes automatically if needed
   int totalPinCount = 0;
   int maxPinNumber = 0;
@@ -64,7 +63,7 @@ public class PinList {
   }
 
   public PinList(int slotCount) {
-    kicadSlots = slotCount;
+    // We will store common symbols in slot[0], so we need one more
     numSlots = slotCount + 1;
     //    System.out.println("New pinlist created with " + numSlots + " slots");
     slotArrays = new SymbolPin[numSlots][pinsPerSlot];
@@ -299,7 +298,7 @@ public class PinList {
       }
     }
 
-    PinList gridAlignedPins = new PinList(kicadSlots);
+    PinList gridAlignedPins = new PinList(numSlots-1);
     //    gridAlignedPins.resetXYExtents();
         // now need to recalculate bounds while
         // adding transmogrified pins to new pin list
@@ -543,56 +542,76 @@ public class PinList {
     //System.out.println("Generated new bounding box");
   }
 
-  public String toString(long xOffset, long yOffset) {
+  public String toString(int slotSel, long xOffset, long yOffset) {
     String output = "";
     SymbolPin.resetPinSeqTally();
+    // Content of slot 0 is included in all slots
     for (int index = 0; index < pinCounts[0]; index++) {
       output = output + "\n" + slotArrays[0][index].toString(xOffset, yOffset);
     }
-    if (pinCounts.length > 1) { // length == 1 for bxl files
-      for (int index = 0; index < pinCounts[1]; index++) {
-        // by default, for a multislot device, we only display slot 1
-        output = output + "\n" + slotArrays[1][index].toString(xOffset, yOffset); 
+    if (slotSel > 0 && slotSel < pinCounts.length) { // if we have the requested slot
+      for (int index = 0; index < pinCounts[slotSel]; index++) {
+        output = output + "\n" + slotArrays[slotSel][index].toString(xOffset, yOffset);
       }
     }
     // we offset text attributes to the RHS by default
     // this should not cause issues with schematic conversions
-    output = output + slotSummaryRHS(xOffset, yOffset);
+    output = output + slotSummaryRHS(slotSel, xOffset, yOffset);
     return output;
   }
 
   public String toKicad(long xOffset, long yOffset) {
     String output = "";
-    SymbolPin.resetPinSeqTally();
-    for (int index = 0; index < pinCounts[0]; index++) {
-      output = output + "\n" + slotArrays[0][index].toKicad(xOffset, yOffset);
+    for (int slotSel = 0; slotSel < pinCounts.length; slotSel++) {
+        output += toKicad(slotSel, xOffset, yOffset);
     }
     return output;
   }
 
-  public String slotSummary(long xOffset, long yOffset) {
-    return slotSummary(xOffset, yOffset, 0); // no RHS offset
+  public String toKicad(int slotSel, long xOffset, long yOffset) {
+    String output = "";
+    if (slotSel == 0)
+        SymbolPin.resetPinSeqTally();
+    if (pinCounts.length > slotSel) { // if we have the requested slot
+      for (int index = 0; index < pinCounts[slotSel]; index++) {
+        output = output + "\n" + slotArrays[slotSel][index].toKicad(xOffset, yOffset);
+      }
+    }
+    return output;
   }
 
-  public String slotSummaryRHS(long xOffset, long yOffset) {
-    return slotSummary(xOffset, yOffset, textRHS()); // offset to RHS
+  public int usedSlots() {
+    for (int slotSel = pinCounts.length-1; slotSel > 0; slotSel--) {
+        if (pinCounts[slotSel] > 0)
+            return slotSel+1;
+    }
+    return 1;
   }
 
-  private String slotSummary(long xOffset, long yOffset, long ROffset) {
+  public String slotSummary(int slotSel, long xOffset, long yOffset) {
+    return slotSummary(slotSel, xOffset, yOffset, 0); // no RHS offset
+  }
+
+  public String slotSummaryRHS(int slotSel, long xOffset, long yOffset) {
+    return slotSummary(slotSel, xOffset, yOffset, textRHS()); // offset to RHS
+  }
+
+  private String slotSummary(int slotSel, long xOffset, long yOffset, long ROffset) {
     String summary = "";
-    if (kicadSlots < 2) {
+    int nslots = usedSlots();
+    if (nslots < 3) {
       summary = SymbolText.attributeString(ROffset + xOffset, yOffset, "numslots=0");
     } else { // this is a multi-slot device
       // we summarise the number of slots
-      summary = SymbolText.attributeString(ROffset + xOffset, yOffset, "numslots=" + kicadSlots);
+      summary = SymbolText.attributeString(ROffset + xOffset, yOffset, "numslots=" + (nslots - 1));
       // we explain which slot is implemented in the symbol
-      summary = summary + SymbolText.attributeString(ROffset + xOffset, yOffset, "slot=1");
+      summary = summary + SymbolText.attributeString(ROffset + xOffset, yOffset, "slot=" + (slotSel));
       // then we generate some slotdefs
-      for (int index = 1; index < numSlots; index++) {
+      for (int index = 1; index < nslots; index++) {
         summary = summary + SymbolText.attributeString(ROffset + xOffset, yOffset, "slotdef=" + index + ":");
         for (int pin = 0 ; pin < pinCounts[index]; pin ++) {
           summary = summary + slotArrays[index][pin].pinNumber;
-          if (pin < (pinCounts[index] -1)) {
+          if (pin < (pinCounts[index] - 1)) {
             summary = summary + ",";
           }
         }
@@ -610,7 +629,7 @@ public class PinList {
   }
   
   public long minX() { // this returns pin minX
-    minX = slotArrays[0][0].localMinXCoord();
+    minX = Long.MAX_VALUE;
     for (int index = 0; index < numSlots; index++) {
       for (int pin = 0 ; pin < pinCounts[index]; pin ++) {
         if (minX > slotArrays[index][pin].localMinXCoord()) {
@@ -622,7 +641,7 @@ public class PinList {
   }
 
   public long minY() { // this returns pin minY
-    minY = slotArrays[0][0].localMinYCoord();
+    minY = Long.MAX_VALUE;
     for (int index = 0; index < numSlots; index++) {
       for (int pin = 0 ; pin < pinCounts[index]; pin ++) {
         if (minY > slotArrays[index][pin].localMinYCoord()) {
@@ -634,7 +653,7 @@ public class PinList {
   }
 
   public long maxX() { // this returns pin maxX
-   maxX = slotArrays[0][0].localMaxXCoord();
+    maxX = Long.MIN_VALUE;
     for (int index = 0; index < numSlots; index++) {
       for (int pin = 0 ; pin < pinCounts[index]; pin ++) {
         if (maxX < slotArrays[index][pin].localMaxXCoord()) {
@@ -643,10 +662,10 @@ public class PinList {
       }
     }
     return maxX;
-  } 
+  }
 
   public long maxY() { // this returns pin maxY
-   maxY = slotArrays[0][0].localMaxYCoord();
+    maxY = Long.MIN_VALUE;
     for (int index = 0; index < numSlots; index++) {
       for (int pin = 0 ; pin < pinCounts[index]; pin ++) {
         if (maxY < slotArrays[index][pin].localMaxYCoord()) {

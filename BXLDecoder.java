@@ -28,6 +28,7 @@
 
 import java.io.*;
 import java.util.Scanner;
+import java.lang.Math;
 
 public class BXLDecoder {
 
@@ -75,19 +76,15 @@ public class BXLDecoder {
     String SymbolDefs[] = new String[20];
 
     // some variables for kicad eeschema symbol export
-    String kicadHeader = "EESchema-LIBRARY Version 2.3\n#\n# converted by BXL2text https://github.com/erichVK5/BXL2text";
-    //String kicadDefs = "";
-    //String kicadDrawn = "\nDRAW";
-    //String kicadFPList = "\n$FPLIST";
-    String kicadDefs[] = new String[20];
+    String kicadFPList = "";
     String kicadDrawn[] = new String[20];
-    String kicadFPList[] = new String[20];
-    int dfIndex = -1;
+    int dfIndex = 0;
+    kicadDrawn[dfIndex] = "";
 
     String newSymbol = "";
     String symAttributes = "";
     PadStackList padStacks = new PadStackList();
-    PinList pins[] = new PinList[20]; // slots = 0
+    PinList pins = new PinList(20); // slots = 20
 
     long xOffset = 0;
     long yOffset = 0;
@@ -127,6 +124,7 @@ public class BXLDecoder {
 
 
         }
+
         try {
           File newFP = new File(FPName + ".fp");
           PrintWriter FPOutput = new PrintWriter(newFP);
@@ -143,25 +141,15 @@ public class BXLDecoder {
           System.out.println(e);
         }
         newElement = ""; // reset the variable
+
       } else if (currentLine.startsWith("Symbol ")) {
         String [] tokens = currentLine.split(" ");
 	dfIndex++;
 
         SymbolName[dfIndex] = tokens[1].replaceAll("[\"]","");
 
-        // build a kicad symbol header DEF section here
-	kicadDefs[dfIndex] = 
-                         "\n# " + SymbolName[dfIndex] + "\n#\n"
-                       + "DEF " + SymbolName[dfIndex] + " U 0 40 Y Y 1 F N\n"
-                       + "F0 \"U\" 0 -150 50 H V C CNN\n"
-                       + "F1 \"" + SymbolName[dfIndex] + "\" 0 150 50 H V C CNN";
-
-        //        PinList pins = new PinList(0); // slots = 0
-        // pins = new PinList(0); // slots = 0
-
-        kicadDrawn[dfIndex] = "\nDRAW";
-        kicadFPList[dfIndex] = "\n$FPLIST";
-        pins[dfIndex] = new PinList(0); // slots = 0
+        // Construct string for storing kicad drawn items
+        kicadDrawn[dfIndex] = "";
 
         while (textBXL.hasNext() &&
                !currentLine.startsWith("EndSymbol")) {
@@ -173,10 +161,12 @@ public class BXLDecoder {
                 textBXL.nextLine().trim() + " " +
                 textBXL.nextLine().trim(); // we combine the 3 lines
             latestPin.populateBXLElement(currentLine);
-            pins[dfIndex].addPin(latestPin);
+            latestPin.setSlot(dfIndex);
+            pins.addPin(latestPin);
           } else if (currentLine.startsWith("Line")) {
             SymbolPolyline symbolLine = new SymbolPolyline();
             symbolLine.populateBXLElement(currentLine);
+            symbolLine.setSlot(dfIndex);
             SymbolDefs[dfIndex] = SymbolDefs[dfIndex]
                 + "\n" + symbolLine.toString(0,0);
             kicadDrawn[dfIndex] = kicadDrawn[dfIndex]
@@ -229,56 +219,69 @@ public class BXLDecoder {
             String FPAttr = "footprint=" + currentLine;
             symAttributes = symAttributes
                   + SymbolText.BXLAttributeString(0,0, FPAttr);
-            kicadFPList[dfIndex] = kicadFPList[dfIndex] + "\n " + currentLine;
+            kicadFPList = kicadFPList + "\n " + currentLine;
           } else if (currentLine.startsWith("AlternatePattern")) {
             currentLine = currentLine.replaceAll(" ", "");
             currentLine = currentLine.split("\"")[1];
             String AltFPAttr = "alt-footprint=" + currentLine;
             symAttributes = symAttributes
                   + SymbolText.BXLAttributeString(0,0, AltFPAttr);
-            kicadFPList[dfIndex] = kicadFPList[dfIndex] + "\n " + currentLine;
+            kicadFPList = kicadFPList + "\n " + currentLine;
           } else if (currentLine.startsWith("CompPin ")) {
-            pins[dfIndex].setBXLPinType(currentLine);
+            pins.setBXLPinType(currentLine);
           }
         }
-        try {
-//          File newSym = new File(symbolName + ".sym");
-//          PrintWriter symOutput = new PrintWriter(newSym);
-//          symOutput.println(newSymbol   // we now add pins to the
-//                            + pins.toString(0,0) // the header, and then
-//                            + symAttributes); // the final attributes
 
-          for (int i=0; i < kicadDefs.length; i++) {
-          if (kicadDefs[i] == null) break;
+        try {
+          int usedSlots = Math.max(pins.usedSlots(), 2);
+          // Skip slot=0 as it contains items common to all other slots
+          for (int i=1; i < usedSlots; i++) {
               File newSym = new File(SymbolName[i] + ".sym");
               PrintWriter symOutput = new PrintWriter(newSym);
               symOutput.println(SymbolDefs[i] // we now add pins to the
-                            + pins[i].toString(0,0) // the header, and then
+                            + pins.toString(i,0,0) // the header, and then
                             + symAttributes); // the final attributes
               symOutput.close();
               System.out.println(SymbolName[i] + ".sym");
           }
+        } catch(Exception e) {
+          System.out.println("There was an error saving: "
+                             + symbolName + ".sym");
+          System.out.println(e);
+        }
+        symAttributes = "";
 
-//          symOutput.close();
-//          System.out.println(symbolName + ".sym");
-
-          // KiCad symbol export
-//          String kicad = kicadHeader
-//                            + kicadDefs
-//                            + kicadFPList + "\n$ENDFPLIST" // name says it all
-//                            + kicadDrawn  // drawn elements here
-//                            + pins.toKicad(0,0) // we now add pins
-//                            + "\nENDDRAW\nENDDEF";
-
-          String kicad = kicadHeader;
-          for (int i=0; i < kicadDefs.length; i++) {
-          if (kicadDefs[i] == null) break;
-              kicad += kicadDefs[i]
-                            + kicadFPList[i] + "\n$ENDFPLIST" // name says it all
-                            + kicadDrawn[i]  // drawn elements here
-                            + pins[i].toKicad(0,0) // we now add pins
-                            + "\nENDDRAW\nENDDEF";
+        try {
+          String kicad = "";
+          // First SymbolName should be without slot index, so it's best to
+          // use it for the kiCAD format which doesn't have separate symbols
+          // for each slot/unit; all units are within one DRAW section.
+          String kicadSymName = "";
+          // Count only used slots
+          int usedSlots = pins.usedSlots();
+          String unitsLocked = (usedSlots > 2) ? "L" : "F";
+          for (int i=0; i < usedSlots; i++) {
+              if ((SymbolName[i] == null) || SymbolName[i].isEmpty())
+                  continue;
+              if (kicadSymName.isEmpty() || kicadSymName.compareTo(SymbolName[i]) > 0)
+                  kicadSymName = SymbolName[i];
           }
+          kicad += "EESchema-LIBRARY Version 2.3"
+                 // start with a comment
+                 + "\n#\n# converted by BXL2text https://github.com/erichVK5/BXL2text"
+                 + "\n# " + kicadSymName + "\n#\n";
+                 // build a kicad symbol header DEF section
+                 // DEF name reference unused text_offset draw_pinnumber draw_pinname unit_count units_locked option_flag
+          kicad += "DEF " + kicadSymName + " U 0 40 Y Y " + (usedSlots - 1) + " " + unitsLocked + " N\n"
+                 + "F0 \"U\" 0 -150 50 H V C CNN\n"
+                 + "F1 \"" + kicadSymName + "\" 0 150 50 H V C CNN";
+          kicad += "\n$FPLIST" + kicadFPList + "\n$ENDFPLIST" // list of matching footprints
+                 + "\nDRAW";
+          for (int i=0; i < usedSlots; i++) {
+              kicad += kicadDrawn[i];  // drawn elements here
+              kicad += pins.toKicad(i,0,0); // we now add pins
+          }
+          kicad += "\nENDDRAW\nENDDEF";
 
           File newKicad = new File(symbolName + ".lib");
           PrintWriter symOutput = new PrintWriter(newKicad);
@@ -288,10 +291,9 @@ public class BXLDecoder {
 
         } catch(Exception e) {
           System.out.println("There was an error saving: "
-                             + symbolName + ".sym"); 
+                             + symbolName + ".lib");
           System.out.println(e);
         }
-        symAttributes = "";
       }
     }
   }      

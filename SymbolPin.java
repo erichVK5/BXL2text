@@ -26,6 +26,7 @@
 //    KicadSymbolToGEDA Copyright (C) 2015 Erich S. Heinzle a1039181@gmail.com
 
 import java.lang.Exception;
+import java.util.regex.Pattern;
 
 /**
  *
@@ -81,9 +82,8 @@ public class SymbolPin extends SymbolElement
   String pinDirection = "0"; // default non-sensical value
   int pinType = 0; // 0 = normal, and 1 = bus/unused
   int activeEnd = 0; // 1 = first end, 0 = second end
-  int kicadUnit = 0; // equivalent to gschem "slot"
 
-  String kicadEType = ""; // kicad equivalent to gschem pintype=
+  String kicadEType = "P"; // kicad equivalent to gschem pintype=
   String pinEType = "pas"; //default setting
 
   // the following variables define the visual appearance of the
@@ -131,7 +131,7 @@ public class SymbolPin extends SymbolElement
     copyOf.pinLength = this.pinLength;
     copyOf.pinDirection = this.pinDirection;
     copyOf.pinEType = this.pinEType;
-    copyOf.kicadUnit = this.kicadUnit;
+    copyOf.slot = this.slot;
     copyOf.organiseLabelAndPinCoords();
     return copyOf;
   }
@@ -169,7 +169,7 @@ public class SymbolPin extends SymbolElement
     super.updateYdimensions(yCoord1);
     organiseLabelAndPinCoords();
 
-    kicadUnit = 0; // assume only one slot
+    slot = 0; // assume only one slot
     pinEType = "pas"; // default for now, may be able to fix
     // by parsing the pin description in the IBIS file. Meh.
 
@@ -201,7 +201,7 @@ public class SymbolPin extends SymbolElement
     super.updateYdimensions(yCoord1);
     organiseLabelAndPinCoords();
 
-    kicadUnit = 0; // assume only one slot
+    slot = 0; // assume only one slot
     pinEType = "pas"; // default for now, may be able to fix...
 
   }
@@ -223,7 +223,7 @@ public class SymbolPin extends SymbolElement
     super.updateYdimensions(yCoord1);
     organiseLabelAndPinCoords();
 
-    kicadUnit = 0; // assume only one slot
+    slot = 0; // assume only one slot
     pinEType = "pas"; // default for now, may be able to fix...
 
   }
@@ -336,7 +336,7 @@ public class SymbolPin extends SymbolElement
     super.updateYdimensions(yCoord1);
     organiseLabelAndPinCoords();
 
-    kicadUnit = 0; // assume only one slot
+    slot = 0; // assume only one slot
     pinEType = EagleEType; // Eagle used pretty much the same notation
     // except for "nc" = not connected
   }
@@ -384,7 +384,7 @@ public class SymbolPin extends SymbolElement
     super.updateYdimensions(yCoord1);
     organiseLabelAndPinCoords();
 
-    kicadUnit = 0; // assume only one slot
+    slot = 0; // assume only one slot
     pinEType = "pas"; // default for now, may be able to fix
 
   }
@@ -408,8 +408,8 @@ public class SymbolPin extends SymbolElement
 
     organiseLabelAndPinCoords();
 
-    // the kicadUnit is equivalent to the slot in gschem... useful
-    kicadUnit = Integer.parseInt(tokens[9]);
+    // the kicad Unit is equivalent to the slot in gschem... useful
+    slot = Integer.parseInt(tokens[9]);
 
     kicadEType = tokens[11]; // the electrical type of the pin
     setPinType(kicadEType); // now set it
@@ -610,12 +610,14 @@ public class SymbolPin extends SymbolElement
   public String toKicad(long xOffset, long yOffset) {
 
     long length = (long)Math.sqrt((xCoord1 - xCoord2)*(xCoord1 - xCoord2) + (yCoord1 - yCoord2)*(yCoord1 - yCoord2));
+
     long kicadX = xCoord2;
     long kicadY = yCoord2;
     if (activeEnd != 1) {
         kicadX = xCoord1;
         kicadY = yCoord1;
     }
+
     String direction = "L";
     if (xCoord1 == xCoord2 && yCoord1 > yCoord2) {
         direction = "D";
@@ -638,19 +640,24 @@ public class SymbolPin extends SymbolElement
                 direction = "L";
         }
     }
-    return ("X "
-            + pinName + " "
-            + pinNumber + " "
-            + (kicadX + xOffset) + " "
-            + (kicadY + yOffset) + " "
-            + length + " "
-            + direction + " "
-            + "50 50 1 1 P");
-            //+ attributeFieldPinType(pinEType, pinNumberX + xOffset, pinNumberY + yOffset, pinNumberOrientation, pinNumberAlignment)
-  }
 
-  public int slot() {
-    return kicadUnit; // kicadUnit is equivalent to slot in gschem
+    // In KiCAD, pin number is not neccessarily a number; it can also store BGA pin coords, A1-ZZ99
+    String bestNumber = pinNumber;
+    if (Pattern.matches("^[A-Za-z]{1,2}[0-9]{1,3}$", pinDesc))
+        bestNumber = pinDesc;
+
+    return ("X "
+            + pinName + " " //  name displayed on the pin
+            + bestNumber + " " // pin no. displayed on the pin, may be in col+row form
+            + (kicadX + xOffset) + " " // Position X same units as the length
+            + (kicadY + yOffset) + " " // Position Y same units as the length
+            + length + " " // length of pin
+            + direction + " " // R for Right, L for left, U for Up, D for Down
+            + (50) + " " + (50) + " " // Text sizes for the pin name and pin number
+            + slot + " " // unit no. in case of multiple units
+            + (0) + " " //  In case of variations in shape for units, each variation has a number. 0 indicates no variations. For example, an inverter may have two variations - one with the bubble on the input and one on the output.
+            + kicadEType.charAt(0) // Elec. Type of pin (I=Input, O=Output, B=Bidi, T=tristate,P=Passive, U=Unspecified, W=Power In, w=Power Out, C=Open Collector, E=Open Emitter, N=Not Connected)
+            ); // end - because Graphic Style of pin is optional
   }
 
   public char pinDirection() {

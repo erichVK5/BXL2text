@@ -36,7 +36,10 @@ public class SymbolElement
   static long minX = 0;
   static long maxY = 0;
   static long minY = 0;
-  
+
+   /** Slot/unit/part to which the element belongs. */
+  int slot = 0;
+
   public void SymbolPolyline()
   {
     output = "#Hmm, the no arg symbol polygon constructor didn't do much";
@@ -76,6 +79,26 @@ public class SymbolElement
 
   public long localMinYCoord() {
     return 0;
+  }
+
+  /** Returns the value of unit/slot/part/symbol index.
+   *
+   * Unit (in kiCAD) is equivalent to slot (in gschem). When component is
+   * complex, sometimes it can be divided into multiple graphics symbols,
+   * which on PCB layout all translate to a single footprint.
+   */
+  public int slot() {
+    return slot;
+  }
+
+  /** Sets the value of unit/slot/part/symbol index.
+   *
+   * In most file formats there is no slot defined in every line.
+   * But in some formats (ie. kiCAD) this is required; hence we need to
+   * inform the element which unit it belongs to.
+   */
+  public void setSlot(int nslot) {
+    this.slot = nslot;
   }
 
   public String toString(long xOffset, long yOffset) {
