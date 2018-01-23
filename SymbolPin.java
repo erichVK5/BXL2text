@@ -640,7 +640,7 @@ public class SymbolPin extends SymbolElement
     }
     return ("X "
             + pinName + " "
-            + pinNumber + " "
+            + pinDesc + " " // was pinNumber, but samarjit tells me this is wrong for BGA
             + (kicadX + xOffset) + " "
             + (kicadY + yOffset) + " "
             + length + " "
