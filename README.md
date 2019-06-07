@@ -55,6 +55,8 @@ Options:
 
 	-t	only output converted text without further conversion
 
+	-o      output/directory/path/including/slashes/
+
 Example usage:
 
 	java BXLDecoder BXLFILE.bxl -t > BXLFILE.txt
