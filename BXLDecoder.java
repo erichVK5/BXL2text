@@ -31,6 +31,8 @@ import java.util.Scanner;
 
 public class BXLDecoder {
 
+  static String outputDir = "";
+
   public static void main (String [] args) {
 
     boolean textOutputOnly = false;
@@ -44,10 +46,13 @@ public class BXLDecoder {
       System.out.println("About to use filename: " + filename);
     }
     
-    if (args.length == 2) {
+    if (args.length > 1) {
       if (args[1].equals("-t")) {
         textOutputOnly = true;
         System.out.println("Planning to do text only on: " + filename);
+      } else if (args[1].equals("-o")) {
+        outputDir = args[2];
+        System.out.println("Planning to use output directory: " + outputDir);
       }
     }
 
@@ -128,7 +133,7 @@ public class BXLDecoder {
 
         }
         try {
-          File newFP = new File(FPName + ".fp");
+          File newFP = new File(outputDir + FPName + ".fp");
           PrintWriter FPOutput = new PrintWriter(newFP);
           FPOutput.println("Element[\"\" \""
                            + FPName
@@ -250,7 +255,7 @@ public class BXLDecoder {
 
           for (int i=0; i < kicadDefs.length; i++) {
           if (kicadDefs[i] == null) break;
-              File newSym = new File(SymbolName[i] + ".sym");
+              File newSym = new File(outputDir + SymbolName[i] + ".sym");
               PrintWriter symOutput = new PrintWriter(newSym);
               symOutput.println(SymbolDefs[i] // we now add pins to the
                             + pins[i].toString(0,0) // the header, and then
@@ -280,7 +285,7 @@ public class BXLDecoder {
                             + "\nENDDRAW\nENDDEF";
           }
 
-          File newKicad = new File(symbolName + ".lib");
+          File newKicad = new File(outputDir + symbolName + ".lib");
           PrintWriter symOutput = new PrintWriter(newKicad);
           symOutput.println(kicad);
           symOutput.close();
