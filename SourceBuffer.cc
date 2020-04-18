@@ -110,6 +110,10 @@ class Node {
     return (level > 7);
   }
 
+  bool is_root() {
+    return (level == 0);
+  }
+
   Node* sibling(Node *node){
     if  (node != right) {
       return right;
@@ -138,6 +142,7 @@ class NodeTree {
 
  public:
       Node *root = 0;
+      Node *nodeList[256];
 
   ~NodeTree() {
       if (root != 0) {
@@ -156,12 +161,21 @@ class NodeTree {
     // fill levels
     while(node != 0) {
       node = root->add_child(leaf_count);
-      if(node != 0 && node->is_leaf()) { leaf_count++; }
+      if(node != 0 && node->is_leaf())
+        {
+		nodeList[leaf_count] = node;
+		// printf("leafCount: %d\n", leaf_count);
+		leaf_count++; 
+	}
     }
   }
 
   Node* getRoot() {
     return root;
+  }
+
+  Node* getSymbolNode(int symbol) {
+    return nodeList[symbol];
   }
 
   void cleanUp() {
@@ -215,6 +229,7 @@ private:
 
     BYTE *source_buffer = 0;
     int source_index = 4;
+    int plain_index = 0;
     int source_char = 0;
     long fileSize = 0;
     int bit = 0;
@@ -258,6 +273,12 @@ public:
             result = source_char & (1 << bit);
         }
         bit--;
+        return result;
+    }
+
+    int read_next_char() {
+        int result = (int)source_buffer[plain_index];
+        plain_index++;
         return result;
     }
 
@@ -323,13 +344,65 @@ public:
       return sb;
   }
 
+  string encode() {
+
+      NodeTree *tree = new NodeTree();
+
+      long out_file_length_in_bits = 0;
+      string sb = "";
+      while (plain_index < fileSize) {
+	  int symbol = read_next_char();
+	  // printf("About to process : %d\n", symbol);
+	  int depth = 0;
+	  int encoded[257]; // we need to account for very asymmetric tree topologies
+          Node *node = tree->getSymbolNode(symbol);
+	  // printf("Found node corresponding to symbol : %d\n", symbol);
+	  node->incrementWeight();
+	  // printf("Incremented weight for symbol : %d\n", symbol);
+          while (!node->is_root()) {
+              // traverse tree up towards root node
+              if (node == node->parent->left) {
+		  encoded[7-depth] = 1; // left of parent
+		  //printf("node associated with symbol is left of parent\n");
+              } else {
+                  encoded[7-depth] = 0; // right of parent
+		  //printf("node associated with symbol is right of parent\n");
+              }
+	      depth++;
+	      // printf("Now at depth : %d\n", depth);
+	      node = node->parent;
+	      out_file_length_in_bits++;
+          }
+	  // printf("Found node to be at depth : %d\n", depth);
+	  for (; depth > 0; depth--) {
+		  if (encoded[8-depth]) {
+			sb = sb + "1";
+			// printf("1"); // can stream this
+		  } else {
+			sb = sb + "0";
+			// printf("0"); // can stream this
+		  }  
+	  }
+	  // printf("file length in bits: %ld\n", out_file_length_in_bits);
+	  // printf("about to update tree after processing symbol %c\n", (char)symbol);
+          tree->update_tree(tree->getSymbolNode(symbol));
+      }
+      printf("encoded file length in bits: %ld\n", out_file_length_in_bits);
+      tree->cleanUp();
+      delete tree;
+      tree = 0;
+      return sb;
+  }
+
 };
 
 int main() {
-    string filename = "LM339_N_14.bxl"; //"MKL27Z256VFM4.bxl";
+    string filename = "test.txt";
+    //string filename = "LM339_N_14.bxl"; //"MKL27Z256VFM4.bxl";
     char* fn = (char*)filename.c_str();	
     SourceBuffer *sb = new SourceBuffer(fn);
-    cout << sb->decode() << endl;
+    //cout << sb->decode() << endl;
+    cout << sb->encode() << endl;
     delete sb;
     return 0;
 }
