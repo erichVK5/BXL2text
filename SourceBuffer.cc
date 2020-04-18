@@ -362,10 +362,10 @@ public:
           while (!node->is_root()) {
               // traverse tree up towards root node
               if (node == node->parent->left) {
-		  encoded[7-depth] = 1; // left of parent
+		  encoded[256-depth] = 1; // left of parent
 		  //printf("node associated with symbol is left of parent\n");
               } else {
-                  encoded[7-depth] = 0; // right of parent
+                  encoded[256-depth] = 0; // right of parent
 		  //printf("node associated with symbol is right of parent\n");
               }
 	      depth++;
@@ -375,7 +375,7 @@ public:
           }
 	  // printf("Found node to be at depth : %d\n", depth);
 	  for (; depth > 0; depth--) {
-		  if (encoded[8-depth]) {
+		  if (encoded[257-depth]) {
 			sb = sb + "1";
 			// printf("1"); // can stream this
 		  } else {
