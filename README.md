@@ -1,4 +1,10 @@
 # BXL2text
+Update, July 2020
+
+The open source pcb layout tool pcb-rnd ( repo.hu/projects/pcb-rnd ) now has native support for loading and saving BXL format libraries, mostly eliminating the need for BXL2text for pcb layout purposes. pcb-rnd can also save in Kicad, gEDA PCB, protel autotrax formats, subject to the limitations of these respective formats.
+
+---------------------------------------------------------------------------
+
 A utility to convert huffman encoded BXL schematic and footprint files to plain text, and undertake further conversion to FOSS EDA compatible formats, which for now is gEDA and Kicad -> preliminary Kicad support has been implemented, with automatic export of eeschmea (.lib) symbols along with gschem (.sym) symbols. Kicad natively supports gEDA PCB .fp footprints, so pcbnew footprint export has not been implemented.
 
 BXL files are a vendor neutral and EDA package neutral file format used by device vendors to distribute schematic symbols and footprints for use in EDA tools such as, but not limited to, gEDA, for PCB and circuit design.
